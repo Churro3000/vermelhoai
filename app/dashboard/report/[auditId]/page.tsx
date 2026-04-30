@@ -354,35 +354,37 @@ export default function ReportPage() {
           })}
         </div>
 
-        {/* REMEDIATION */}
-        <div className="card border-[#00A651]/30 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Remediation Recommendations
-          </h2>
-          <div className="space-y-3 text-sm text-gray-600 leading-relaxed">
-            {[
-              { title: 'Harden your system prompt', body: 'Add explicit role-restriction instructions. Test all persona injection variants. Use clear, unambiguous language about what the AI should never do.', ref: 'OWASP LLM01:2025' },
-              { title: 'Implement output filtering', body: 'Deploy a detection layer that scans all model outputs for sensitive data patterns before returning responses to users.', ref: 'OWASP LLM02:2025' },
-              { title: 'Suppress system verbosity', body: 'Configure your API gateway to return generic errors without system details, model version, or internal configuration.', ref: 'OWASP LLM07:2025' },
-              { title: 'Add conversation-level monitoring', body: 'Implement monitoring to detect escalating adversarial patterns across multi-turn conversations.', ref: 'OWASP LLM08:2025' },
-              { title: 'Restrict plugin and tool access', body: 'Apply least-privilege principles to any tools or data sources your AI has access to. Audit all integrations.', ref: 'OWASP LLM06:2025' },
-            ].map((item, i) => (
-              vulnCategories.length === 0 || i < 3 ? (
-                <div key={item.title} className="flex gap-3">
-                  <div className="w-6 h-6 rounded-full bg-[#F5F5F0] border border-gray-200 flex items-center justify-center shrink-0 text-xs font-bold text-gray-500 mt-0.5">
-                    {i + 1}
+        {/* REMEDIATION — only show if vulnerabilities found */}
+        {vulnCount > 0 && (
+          <div className="card border-[#00A651]/30 mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+              Remediation Recommendations
+            </h2>
+            <div className="space-y-3 text-sm text-gray-600 leading-relaxed">
+              {[
+                { title: 'Harden your system prompt', body: 'Add explicit role-restriction instructions. Test all persona injection variants. Use clear, unambiguous language about what the AI should never do.', ref: 'OWASP LLM01:2025' },
+                { title: 'Implement output filtering', body: 'Deploy a detection layer that scans all model outputs for sensitive data patterns before returning responses to users.', ref: 'OWASP LLM02:2025' },
+                { title: 'Suppress system verbosity', body: 'Configure your API gateway to return generic errors without system details, model version, or internal configuration.', ref: 'OWASP LLM07:2025' },
+                { title: 'Add conversation-level monitoring', body: 'Implement monitoring to detect escalating adversarial patterns across multi-turn conversations.', ref: 'OWASP LLM08:2025' },
+                { title: 'Restrict plugin and tool access', body: 'Apply least-privilege principles to any tools or data sources your AI has access to. Audit all integrations.', ref: 'OWASP LLM06:2025' },
+              ].map((item, i) => (
+                vulnCategories.length === 0 || i < 3 ? (
+                  <div key={item.title} className="flex gap-3">
+                    <div className="w-6 h-6 rounded-full bg-[#F5F5F0] border border-gray-200 flex items-center justify-center shrink-0 text-xs font-bold text-gray-500 mt-0.5">
+                      {i + 1}
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">{item.title}
+                        <span className="ml-2 text-xs font-normal text-gray-400">{item.ref}</span>
+                      </p>
+                      <p className="text-gray-500 mt-0.5">{item.body}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-bold text-gray-900">{item.title}
-                      <span className="ml-2 text-xs font-normal text-gray-400">{item.ref}</span>
-                    </p>
-                    <p className="text-gray-500 mt-0.5">{item.body}</p>
-                  </div>
-                </div>
-              ) : null
-            ))}
+                ) : null
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ACTIONS */}
         <div className="flex flex-wrap gap-3 mb-8">
