@@ -1,5 +1,52 @@
 import Link from 'next/link'
-import { Shield, Zap, FileText, ChevronRight, Check, AlertTriangle, Lock, Globe, Code2, ArrowRight } from 'lucide-react'
+import { Zap, FileText, ChevronRight, Check, AlertTriangle, Lock, Globe, Code2 } from 'lucide-react'
+
+function ShieldLogo({ size = 24, textColor = 'text-gray-900' }: { size?: number; textColor?: string }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Right half — base red */}
+        <path
+          d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22C16.6 20.7 20 16.25 20 11.5V5.5L12 2Z"
+          fill="#CC1A1A"
+        />
+        {/* Left half — darker shadow */}
+        <path
+          d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22V2Z"
+          fill="#8B1010"
+        />
+        {/* Top-right shine sweep */}
+        <path
+          d="M13 3.3L18.5 6.1V11.5C18.5 14.5 17 17.3 14.5 19.4C16.8 17.8 19 14.9 19 11.5V6L13 3.3Z"
+          fill="white"
+          fillOpacity="0.12"
+        />
+        {/* Small glare dot */}
+        <ellipse
+          cx="16"
+          cy="7"
+          rx="1.8"
+          ry="1.2"
+          fill="white"
+          fillOpacity="0.2"
+          transform="rotate(-20 16 7)"
+        />
+      </svg>
+      <span
+        className={`font-bold tracking-tight ${textColor}`}
+        style={{ fontFamily: 'var(--font-display)', fontSize: size * 0.67 }}
+      >
+        Vermelho<span className="text-[#CC1A1A]">AI</span>
+      </span>
+    </div>
+  )
+}
 
 export default function LandingPage() {
   return (
@@ -9,11 +56,8 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
           {/* Logo — flush left */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <Shield className="w-6 h-6 text-[#CC1A1A]" strokeWidth={2.5} />
-            <span className="font-bold text-base text-gray-900 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
-              Vermelho<span className="text-[#CC1A1A]">AI</span>
-            </span>
+          <Link href="/" className="shrink-0">
+            <ShieldLogo size={24} textColor="text-gray-900" />
           </Link>
 
           {/* Center links */}
@@ -94,7 +138,13 @@ export default function LandingPage() {
             <span className="flex items-center gap-1.5"><Code2 className="w-3.5 h-3.5 text-[#CC1A1A]" /> Chatbots</span>
             <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-[#CC1A1A]" /> Customer support AI</span>
             <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-[#CC1A1A]" /> Enterprise LLM apps</span>
-            <span className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 text-[#CC1A1A]" /> Medical AI tools</span>
+            <span className="flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22C16.6 20.7 20 16.25 20 11.5V5.5L12 2Z" fill="#CC1A1A" />
+                <path d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22V2Z" fill="#8B1010" />
+              </svg>
+              Medical AI tools
+            </span>
             <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-[#CC1A1A]" /> AI agents</span>
           </div>
         </div>
@@ -197,9 +247,20 @@ export default function LandingPage() {
       {/* WHY VERMELHOAI */}
       <section className="py-24 bg-[#F8F8F5]">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-10 text-center">
+          {/* Using inline styles to guarantee the g isn't clipped */}
+          <div className="text-center" style={{ marginBottom: '2.5rem' }}>
             <div className="badge badge-gray mb-4 mx-auto">Why VermelhoAI</div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-5 tracking-tight leading-normal" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2
+              className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight"
+              style={{
+                fontFamily: 'var(--font-display)',
+                lineHeight: '1.35',
+                marginBottom: '1rem',
+                display: 'block',
+                overflow: 'visible',
+                paddingBottom: '6px',
+              }}
+            >
               Security testing that just works
             </h2>
             <p className="text-base text-gray-500 max-w-lg mx-auto">
@@ -209,9 +270,9 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-3 gap-5 max-w-4xl mx-auto">
             {[
-              { name: 'CLI Tools',      desc: 'For developers',  setup: 'CLI setup required',    probes: 'DIY config',        price: 'Free / complex', highlight: false },
-              { name: 'VermelhoAI',     desc: 'For everyone',    setup: 'Paste URL, click run',  probes: '200+ built-in',     price: '$99/month',      highlight: true  },
-              { name: 'Research Tools', desc: 'For researchers', setup: 'Python environment',    probes: '3,000+ (complex)',  price: 'Free / complex', highlight: false },
+              { name: 'CLI Tools',      desc: 'For developers',  setup: 'CLI setup required',   probes: 'DIY config',       price: 'Free / complex', highlight: false },
+              { name: 'VermelhoAI',     desc: 'For everyone',    setup: 'Paste URL, click run', probes: '200+ built-in',    price: '$99/month',      highlight: true  },
+              { name: 'Research Tools', desc: 'For researchers', setup: 'Python environment',   probes: '3,000+ (complex)', price: 'Free / complex', highlight: false },
             ].map((item) => (
               <div key={item.name} className={`card transition-all duration-200 ${item.highlight ? 'border-[#CC1A1A] bg-[#FEF2F2]/60 shadow-sm' : 'hover:border-gray-300'}`}>
                 <div className="mb-5">
@@ -222,15 +283,9 @@ export default function LandingPage() {
                   <p className="text-xs text-gray-400 font-medium">{item.desc}</p>
                 </div>
                 <div className="space-y-2.5 text-sm">
-                  <div className="flex items-center gap-2.5 text-gray-600">
-                    <Check className="w-3.5 h-3.5 text-[#00A651] shrink-0" /> {item.setup}
-                  </div>
-                  <div className="flex items-center gap-2.5 text-gray-600">
-                    <Check className="w-3.5 h-3.5 text-[#00A651] shrink-0" /> {item.probes}
-                  </div>
-                  <div className="flex items-center gap-2.5 text-gray-600">
-                    <Check className="w-3.5 h-3.5 text-[#00A651] shrink-0" /> {item.price}
-                  </div>
+                  <div className="flex items-center gap-2.5 text-gray-600"><Check className="w-3.5 h-3.5 text-[#00A651] shrink-0" /> {item.setup}</div>
+                  <div className="flex items-center gap-2.5 text-gray-600"><Check className="w-3.5 h-3.5 text-[#00A651] shrink-0" /> {item.probes}</div>
+                  <div className="flex items-center gap-2.5 text-gray-600"><Check className="w-3.5 h-3.5 text-[#00A651] shrink-0" /> {item.price}</div>
                 </div>
               </div>
             ))}
@@ -246,7 +301,9 @@ export default function LandingPage() {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
               Simple, transparent pricing
             </h2>
-            <p className="text-base text-gray-500">7-day free trial on all plans. Cancel anytime.</p>
+            <p className="text-base text-gray-500" style={{ lineHeight: '1.6', paddingBottom: '0.125rem' }}>
+              7-day free trial on all plans. Cancel anytime.
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
@@ -276,7 +333,6 @@ export default function LandingPage() {
 
             {/* Professional */}
             <div className="card border-[#CC1A1A] relative overflow-hidden shadow-sm">
-              {/* Top accent line */}
               <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#CC1A1A]" />
               <div className="absolute top-4 right-4">
                 <span className="badge badge-red text-xs">Most popular</span>
@@ -310,7 +366,6 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Free tier note */}
           <p className="text-center text-sm text-gray-400 mt-6">
             Just exploring? <Link href="/signup" className="text-[#CC1A1A] font-medium hover:underline">Sign up free</Link> — 10 probes included, no card required.
           </p>
@@ -335,20 +390,15 @@ export default function LandingPage() {
       <footer className="py-12 bg-[#0D0D0B]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-10">
-            {/* Brand */}
             <div className="shrink-0">
-              <div className="flex items-center gap-2 mb-3">
-                <Shield className="w-5 h-5 text-[#CC1A1A]" strokeWidth={2.5} />
-                <span className="font-bold text-sm text-white" style={{ fontFamily: 'var(--font-display)' }}>
-                  Vermelho<span className="text-[#CC1A1A]">AI</span>
-                </span>
+              <div className="mb-3">
+                <ShieldLogo size={20} textColor="text-white" />
               </div>
               <p className="text-gray-500 text-xs max-w-[200px] leading-relaxed">
                 AI red teaming for developers. Find vulnerabilities before your users do.
               </p>
             </div>
 
-            {/* Links */}
             <div className="flex flex-wrap gap-10 text-sm">
               <div className="space-y-3">
                 <p className="text-gray-500 font-semibold text-xs uppercase tracking-wider">Product</p>
