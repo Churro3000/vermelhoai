@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Zap, FileText, ChevronRight, Check, AlertTriangle, Lock, Globe, Code2 } from 'lucide-react'
 
-function ShieldLogo({ size = 24, textColor = 'text-gray-900' }: { size?: number; textColor?: string }) {
+function ShieldLogo({ size = 27, textColor = 'text-gray-900' }: { size?: number; textColor?: string }) {
   return (
     <div className="flex items-center gap-2.5">
       <svg
@@ -11,31 +11,40 @@ function ShieldLogo({ size = 24, textColor = 'text-gray-900' }: { size?: number;
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Right half — base red */}
+        <defs>
+          {/* Gradient for right-side shadow — lighter at top, darker toward bottom */}
+          <linearGradient id="shadowFade" x1="12" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#8B1010" stopOpacity="0.45" />
+            <stop offset="100%" stopColor="#5A0808" stopOpacity="0.8" />
+          </linearGradient>
+          {/* Clip to right half only */}
+          <clipPath id="rightHalf">
+            <rect x="12" y="0" width="12" height="24" />
+          </clipPath>
+        </defs>
+
+        {/* Base shield — full red */}
         <path
           d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22C16.6 20.7 20 16.25 20 11.5V5.5L12 2Z"
           fill="#CC1A1A"
         />
-        {/* Left half — darker shadow */}
+
+        {/* Right half shadow with fade — darker at bottom, lighter at top */}
         <path
-          d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22V2Z"
-          fill="#8B1010"
+          d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22C16.6 20.7 20 16.25 20 11.5V5.5L12 2Z"
+          fill="url(#shadowFade)"
+          clipPath="url(#rightHalf)"
         />
-        {/* Top-right shine sweep */}
+
+        {/* Tiny white V notch — top right corner of shield */}
         <path
-          d="M13 3.3L18.5 6.1V11.5C18.5 14.5 17 17.3 14.5 19.4C16.8 17.8 19 14.9 19 11.5V6L13 3.3Z"
-          fill="white"
-          fillOpacity="0.12"
-        />
-        {/* Small glare dot */}
-        <ellipse
-          cx="16"
-          cy="7"
-          rx="1.8"
-          ry="1.2"
-          fill="white"
-          fillOpacity="0.2"
-          transform="rotate(-20 16 7)"
+          d="M15.2 3.6L17.2 5.6L19.0 3.9"
+          stroke="white"
+          strokeWidth="0.85"
+          strokeOpacity="0.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
         />
       </svg>
       <span
@@ -57,7 +66,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
           {/* Logo — flush left */}
           <Link href="/" className="shrink-0">
-            <ShieldLogo size={24} textColor="text-gray-900" />
+            <ShieldLogo size={27} textColor="text-gray-900" />
           </Link>
 
           {/* Center links */}
@@ -139,9 +148,19 @@ export default function LandingPage() {
             <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-[#CC1A1A]" /> Customer support AI</span>
             <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-[#CC1A1A]" /> Enterprise LLM apps</span>
             <span className="flex items-center gap-1.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              {/* Mini shield — matches main logo style */}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <defs>
+                  <linearGradient id="shadowFadeMini" x1="12" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#8B1010" stopOpacity="0.45" />
+                    <stop offset="100%" stopColor="#5A0808" stopOpacity="0.8" />
+                  </linearGradient>
+                  <clipPath id="rightHalfMini">
+                    <rect x="12" y="0" width="12" height="24" />
+                  </clipPath>
+                </defs>
                 <path d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22C16.6 20.7 20 16.25 20 11.5V5.5L12 2Z" fill="#CC1A1A" />
-                <path d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22V2Z" fill="#8B1010" />
+                <path d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22C16.6 20.7 20 16.25 20 11.5V5.5L12 2Z" fill="url(#shadowFadeMini)" clipPath="url(#rightHalfMini)" />
               </svg>
               Medical AI tools
             </span>
@@ -247,7 +266,6 @@ export default function LandingPage() {
       {/* WHY VERMELHOAI */}
       <section className="py-24 bg-[#F8F8F5]">
         <div className="max-w-7xl mx-auto px-6">
-          {/* Using inline styles to guarantee the g isn't clipped */}
           <div className="text-center" style={{ marginBottom: '2.5rem' }}>
             <div className="badge badge-gray mb-4 mx-auto">Why VermelhoAI</div>
             <h2
@@ -392,7 +410,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-10">
             <div className="shrink-0">
               <div className="mb-3">
-                <ShieldLogo size={20} textColor="text-white" />
+                <ShieldLogo size={22} textColor="text-white" />
               </div>
               <p className="text-gray-500 text-xs max-w-[200px] leading-relaxed">
                 AI red teaming for developers. Find vulnerabilities before your users do.
