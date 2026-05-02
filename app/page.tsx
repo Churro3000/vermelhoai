@@ -4,49 +4,50 @@ import { Zap, FileText, ChevronRight, Check, AlertTriangle, Lock, Globe, Code2 }
 function ShieldLogo({ size = 27, textColor = 'text-gray-900' }: { size?: number; textColor?: string }) {
   return (
     <div className="flex items-center gap-2.5">
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          {/* Gradient for right-side shadow — lighter at top, darker toward bottom */}
-          <linearGradient id="shadowFade" x1="12" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#8B1010" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="#5A0808" stopOpacity="0.8" />
-          </linearGradient>
-          {/* Clip to right half only */}
-          <clipPath id="rightHalf">
-            <rect x="12" y="0" width="12" height="24" />
-          </clipPath>
-        </defs>
-
-        {/* Base shield — full red */}
-        <path
-          d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22C16.6 20.7 20 16.25 20 11.5V5.5L12 2Z"
-          fill="#CC1A1A"
-        />
-
-        {/* Right half shadow with fade — darker at bottom, lighter at top */}
-        <path
-          d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22C16.6 20.7 20 16.25 20 11.5V5.5L12 2Z"
-          fill="url(#shadowFade)"
-          clipPath="url(#rightHalf)"
-        />
-
-        {/* Tiny white V notch — top right corner of shield */}
-        <path
-          d="M15.2 3.6L17.2 5.6L19.0 3.9"
-          stroke="white"
-          strokeWidth="0.85"
-          strokeOpacity="0.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+      <div style={{ position: 'relative', width: size, height: size }}>
+        <svg
+          width={size}
+          height={size}
+          viewBox="0 0 24 24"
           fill="none"
-        />
-      </svg>
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient id="shadowFade" x1="12" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#8B1010" stopOpacity="0.45" />
+              <stop offset="100%" stopColor="#5A0808" stopOpacity="0.8" />
+            </linearGradient>
+            <clipPath id="rightHalf">
+              <rect x="12" y="0" width="12" height="24" />
+            </clipPath>
+          </defs>
+          <path
+            d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22C16.6 20.7 20 16.25 20 11.5V5.5L12 2Z"
+            fill="#CC1A1A"
+          />
+          <path
+            d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22C16.6 20.7 20 16.25 20 11.5V5.5L12 2Z"
+            fill="url(#shadowFade)"
+            clipPath="url(#rightHalf)"
+          />
+        </svg>
+        {/* Real V character — top right of shield body */}
+        <span
+          style={{
+            position: 'absolute',
+            top: '28%',
+            right: '12%',
+            fontFamily: 'var(--font-display)',
+            fontWeight: 700,
+            color: 'white',
+            fontSize: size * 0.28,
+            lineHeight: 1,
+            userSelect: 'none',
+          }}
+        >
+          V
+        </span>
+      </div>
       <span
         className={`font-bold tracking-tight ${textColor}`}
         style={{ fontFamily: 'var(--font-display)', fontSize: size * 0.67 }}
