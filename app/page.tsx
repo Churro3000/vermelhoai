@@ -35,12 +35,12 @@ function ShieldLogo({ size = 27, textColor = 'text-gray-900' }: { size?: number;
         <span
           style={{
             position: 'absolute',
-            top: '28%',
-            right: '12%',
+            top: '22%',
+            right: '18%',
             fontFamily: 'var(--font-display)',
             fontWeight: 700,
             color: 'white',
-            fontSize: size * 0.28,
+            fontSize: size * 0.22,
             lineHeight: 1,
             userSelect: 'none',
           }}
@@ -67,7 +67,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
           {/* Logo — flush left */}
           <Link href="/" className="shrink-0">
-            <ShieldLogo size={27} textColor="text-gray-900" />
+            <ShieldLogo size={32} textColor="text-gray-900" />
           </Link>
 
           {/* Center links */}
@@ -411,7 +411,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-10">
             <div className="shrink-0">
               <div className="mb-3">
-                <ShieldLogo size={22} textColor="text-white" />
+                <ShieldLogo size={26} textColor="text-white" />
               </div>
               <p className="text-gray-500 text-xs max-w-[200px] leading-relaxed">
                 AI red teaming for developers. Find vulnerabilities before your users do.
