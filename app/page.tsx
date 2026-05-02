@@ -36,7 +36,7 @@ function ShieldLogo({ size = 27, textColor = 'text-gray-900' }: { size?: number;
           style={{
             position: 'absolute',
             top: '22%',
-            right: '18%',
+            right: '26%',
             fontFamily: 'var(--font-display)',
             fontWeight: 700,
             color: 'white',
