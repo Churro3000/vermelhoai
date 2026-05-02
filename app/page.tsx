@@ -199,7 +199,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="mb-14 text-center">
             <div className="badge badge-gray mb-4 mx-auto">Why VermelhoAI</div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 tracking-tight pb-1 overflow-visible" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 tracking-tight leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
               Security testing that just works
             </h2>
             <p className="text-base text-gray-500 max-w-lg mx-auto">
