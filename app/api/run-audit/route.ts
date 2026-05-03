@@ -17,18 +17,48 @@ export async function POST(req: NextRequest) {
       ? JSON.parse(Buffer.from(session, 'base64').toString()).email
       : 'anonymous'
 
-    // Single sql instance for entire request
     const sql = neon(process.env.DATABASE_URL!)
 
     // Check subscription tier
     const subRows = await sql`
-      SELECT plan, status FROM subscriptions
+      SELECT plan, status, created_at FROM subscriptions
       WHERE user_email = ${userEmail}
       AND status = 'active'
       LIMIT 1
     `
     const userPlan = subRows[0]?.plan ?? 'free'
-    const probeLimit = userPlan === 'professional' ? probes.length : userPlan === 'starter' ? 50 : 10
+
+    // Monthly test limits — professional is unlimited
+    const testLimit = userPlan === 'professional' ? null : userPlan === 'starter' ? 50 : 10
+
+    // Count tests used this calendar month
+    if (testLimit !== null) {
+      const now = new Date()
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
+
+      const usageRows = await sql`
+        SELECT COUNT(*) as count FROM audits
+        WHERE user_email = ${userEmail}
+        AND timestamp >= ${monthStart}
+        AND timestamp <= ${monthEnd}
+      `
+      const testsUsedThisMonth = parseInt(usageRows[0]?.count ?? '0')
+
+      if (testsUsedThisMonth >= testLimit) {
+        return NextResponse.json(
+          {
+            error: userPlan === 'free'
+              ? `You've used all ${testLimit} free tests this month. Upgrade to run more.`
+              : `You've used all ${testLimit} tests this month. Your limit resets next month.`
+          },
+          { status: 403 }
+        )
+      }
+    }
+
+    // Probe limit — all paid plans get full 200+ probe library
+    const probeLimit = userPlan === 'free' ? 10 : probes.length
     const activeProbes = probes.slice(0, probeLimit)
 
     // Step 1: Run all probes sequentially, collect raw responses
@@ -41,10 +71,10 @@ export async function POST(req: NextRequest) {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`,
           },
-          body: JSON.stringify({ 
-  model: 'llama-3.1-8b-instant',
-  messages: [{ role: 'user', content: attack.prompt }] 
-}),
+          body: JSON.stringify({
+            model: 'llama-3.1-8b-instant',
+            messages: [{ role: 'user', content: attack.prompt }]
+          }),
           signal: AbortSignal.timeout(10000),
         })
 
@@ -69,23 +99,23 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 2: Analyze with Groq sequentially with delay to avoid rate limits
-const results = []
-for (const { attack, responseText } of rawResults) {
-  const analysis = await analyzeWithGroq(attack.prompt, responseText, attack.category)
-  results.push({
-    id: attack.id,
-    category: attack.category,
-    prompt: attack.prompt,
-    response: responseText.slice(0, 500),
-    vulnerable: analysis.vulnerable,
-    reason: analysis.reason,
-    citation: analysis.citation,
-    severity: analysis.severity,
-    hintSeverity: attack.severity,
-    engine: 'VermelhoAI + Groq',
-  })
-  await new Promise(resolve => setTimeout(resolve, 2000))
-}
+    const results = []
+    for (const { attack, responseText } of rawResults) {
+      const analysis = await analyzeWithGroq(attack.prompt, responseText, attack.category)
+      results.push({
+        id: attack.id,
+        category: attack.category,
+        prompt: attack.prompt,
+        response: responseText.slice(0, 500),
+        vulnerable: analysis.vulnerable,
+        reason: analysis.reason,
+        citation: analysis.citation,
+        severity: analysis.severity,
+        hintSeverity: attack.severity,
+        engine: 'VermelhoAI + Groq',
+      })
+      await new Promise(resolve => setTimeout(resolve, 2000))
+    }
 
     const vulnCount = results.filter(r => r.vulnerable).length
     const riskScore = Math.round((vulnCount / results.length) * 100)
@@ -113,7 +143,7 @@ for (const { attack, responseText } of rawResults) {
           totalProbes: results.length,
           vulnerabilitiesFound: vulnCount,
           endpointUrl,
-          appUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'https://hred-ai.vercel.app',
+          appUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'https://vermelhoai.vercel.app',
         }),
       })
     } catch (emailErr) {

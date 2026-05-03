@@ -58,13 +58,19 @@ function DashboardContent() {
   const [isRunning, setIsRunning] = useState(false)
   const [auditError, setAuditError] = useState('')
   const [userPlan, setUserPlan] = useState<string>('free')
+  const [testsUsed, setTestsUsed] = useState<number>(0)
+  const [testLimit, setTestLimit] = useState<number | null>(10)
   const searchParams = useSearchParams()
   const paymentStatus = searchParams.get('payment')
 
   useEffect(() => {
     fetch('/api/subscription')
       .then(res => res.json())
-      .then(data => setUserPlan(data.plan ?? 'free'))
+      .then(data => {
+        setUserPlan(data.plan ?? 'free')
+        setTestsUsed(data.testsUsed ?? 0)
+        setTestLimit(data.testLimit ?? 10)
+      })
       .catch(() => setUserPlan('free'))
   }, [])
 
@@ -121,6 +127,10 @@ function DashboardContent() {
   )
 
   if (!user) return null
+
+  const testsRemaining = testLimit !== null ? testLimit - testsUsed : null
+  const usagePercent = testLimit !== null ? Math.min((testsUsed / testLimit) * 100, 100) : 0
+  const isAtLimit = testLimit !== null && testsUsed >= testLimit
 
   return (
     <div className="min-h-screen bg-[#F5F5F0] flex flex-col">
@@ -202,7 +212,7 @@ function DashboardContent() {
                   You're on the free trial
                 </p>
                 <p className="text-gray-500 text-sm mt-0.5">
-                  Upgrade to run unlimited tests with the full 100+ probe library.
+                  Upgrade to run more tests with the full 200+ probe library.
                 </p>
               </div>
               <Link href="/dashboard/upgrade" className="shrink-0">
@@ -214,14 +224,72 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* PLAN BADGE */}
+        {/* PLAN STATUS + USAGE BAR */}
         {userPlan !== 'free' && (
           <div className="card border-[#00A651]/30 bg-[#F0FDF4]/50 mb-6">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="w-5 h-5 text-[#00A651] shrink-0" />
-              <p className="text-green-700 text-sm font-semibold">
-                {userPlan === 'starter' ? 'Starter Plan' : 'Professional Plan'} — active
-              </p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-[#00A651] shrink-0" />
+                <p className="text-green-700 text-sm font-semibold">
+                  {userPlan === 'starter' ? 'Starter Plan' : 'Professional Plan'} — active
+                </p>
+              </div>
+              {/* Usage — only show for Starter, Professional is unlimited */}
+              {userPlan === 'starter' && testLimit !== null && (
+                <div className="flex items-center gap-3 text-sm">
+                  <span className={`font-semibold ${isAtLimit ? 'text-[#CC1A1A]' : 'text-gray-700'}`}>
+                    {testsUsed}/{testLimit} tests used this month
+                  </span>
+                  <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${isAtLimit ? 'bg-[#CC1A1A]' : usagePercent >= 80 ? 'bg-yellow-500' : 'bg-[#00A651]'}`}
+                      style={{ width: `${usagePercent}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              {userPlan === 'professional' && (
+                <span className="text-green-700 text-xs font-medium">Unlimited tests</span>
+              )}
+            </div>
+            {/* At limit warning */}
+            {isAtLimit && userPlan === 'starter' && (
+              <div className="mt-3 pt-3 border-t border-green-200 flex items-center justify-between gap-4">
+                <p className="text-[#CC1A1A] text-xs font-semibold">
+                  Monthly limit reached. Resets on the 1st of next month.
+                </p>
+                <Link href="/dashboard/upgrade">
+                  <button className="btn-red text-xs py-1.5 px-3 flex items-center gap-1.5">
+                    <Zap className="w-3 h-3" /> Upgrade
+                  </button>
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* FREE TIER USAGE */}
+        {userPlan === 'free' && (
+          <div className="card mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="text-gray-700 text-sm font-semibold">
+                  Free trial: {testsUsed}/{testLimit} tests used this month
+                </span>
+                <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${isAtLimit ? 'bg-[#CC1A1A]' : 'bg-gray-400'}`}
+                    style={{ width: `${usagePercent}%` }}
+                  />
+                </div>
+              </div>
+              {isAtLimit && (
+                <Link href="/dashboard/upgrade">
+                  <button className="btn-red text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0">
+                    <Zap className="w-3 h-3" /> Upgrade to continue
+                  </button>
+                </Link>
+              )}
             </div>
           </div>
         )}
@@ -237,7 +305,8 @@ function DashboardContent() {
             </div>
             <button
               onClick={() => setShowNewAudit(true)}
-              className="btn-red flex items-center gap-2 whitespace-nowrap"
+              disabled={isAtLimit}
+              className="btn-red flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="w-4 h-4" /> Run New Test
             </button>
@@ -286,7 +355,11 @@ function DashboardContent() {
                 No audits yet
               </p>
               <p className="text-gray-400 text-sm mb-4">Run your first test to see results here.</p>
-              <button onClick={() => setShowNewAudit(true)} className="btn-red text-sm py-2 px-6">
+              <button
+                onClick={() => setShowNewAudit(true)}
+                disabled={isAtLimit}
+                className="btn-red text-sm py-2 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Run your first test
               </button>
             </div>
@@ -362,8 +435,20 @@ function DashboardContent() {
               </h2>
             </div>
             <p className="text-gray-500 text-sm mb-6 ml-12">
-              Enter your AI endpoint. 100+ adversarial probes will run against it.
+              Enter your AI endpoint. 200+ adversarial probes will run against it.
             </p>
+
+            {/* Usage reminder in modal */}
+            {testLimit !== null && (
+              <div className="mb-4 px-3 py-2 bg-[#F8F8F5] rounded-lg border border-gray-200 flex items-center justify-between">
+                <span className="text-xs text-gray-500 font-medium">
+                  {testsUsed}/{testLimit} tests used this month
+                </span>
+                <span className={`text-xs font-semibold ${testsRemaining === 1 ? 'text-[#CC1A1A]' : 'text-gray-500'}`}>
+                  {testsRemaining} remaining
+                </span>
+              </div>
+            )}
 
             <form onSubmit={handleSubmitAudit} className="space-y-4">
               <div>
@@ -418,7 +503,7 @@ function DashboardContent() {
                 className="btn-red w-full justify-center py-3.5 disabled:opacity-60"
               >
                 {isRunning
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Running 100+ probes...</>
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Running probes...</>
                   : <><CheckCircle className="w-4 h-4" /> Launch audit</>
                 }
               </button>
