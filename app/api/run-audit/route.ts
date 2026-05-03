@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     // Check subscription tier
     const subRows = await sql`
-      SELECT plan, status, created_at FROM subscriptions
+      SELECT plan, status, expires_at FROM subscriptions
       WHERE user_email = ${userEmail}
       AND status = 'active'
       LIMIT 1
@@ -31,26 +31,28 @@ export async function POST(req: NextRequest) {
     // Monthly test limits — professional is unlimited
     const testLimit = userPlan === 'professional' ? null : userPlan === 'starter' ? 50 : 10
 
-    // Count tests used this calendar month
+    // Count tests used in current billing period
     if (testLimit !== null) {
-      const now = new Date()
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
+      const expiresAt = subRows[0]?.expires_at ? new Date(subRows[0].expires_at) : null
+      const periodStart = expiresAt
+        ? new Date(expiresAt.getFullYear(), expiresAt.getMonth() - 1, expiresAt.getDate()).toISOString()
+        : new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+      const periodEnd = expiresAt ? expiresAt.toISOString() : new Date().toISOString()
 
       const usageRows = await sql`
         SELECT COUNT(*) as count FROM audits
         WHERE user_email = ${userEmail}
-        AND timestamp >= ${monthStart}
-        AND timestamp <= ${monthEnd}
+        AND timestamp >= ${periodStart}
+        AND timestamp <= ${periodEnd}
       `
-      const testsUsedThisMonth = parseInt(usageRows[0]?.count ?? '0')
+      const testsUsedThisPeriod = parseInt(usageRows[0]?.count ?? '0')
 
-      if (testsUsedThisMonth >= testLimit) {
+      if (testsUsedThisPeriod >= testLimit) {
         return NextResponse.json(
           {
             error: userPlan === 'free'
-              ? `You've used all ${testLimit} free tests this month. Upgrade to run more.`
-              : `You've used all ${testLimit} tests this month. Your limit resets next month.`
+              ? `You've used all ${testLimit} free tests. Upgrade to run more.`
+              : `You've used all ${testLimit} tests this billing period. Your limit resets on your next renewal date.`
           },
           { status: 403 }
         )

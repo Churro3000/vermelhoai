@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
     const sql = neon(process.env.DATABASE_URL!)
     const rows = await sql`
-      SELECT plan, status FROM subscriptions
+      SELECT plan, status, expires_at FROM subscriptions
       WHERE user_email = ${email}
       AND status = 'active'
       LIMIT 1
@@ -19,15 +19,18 @@ export async function GET(req: NextRequest) {
     const testLimit = plan === 'professional' ? null : plan === 'starter' ? 50 : 10
 
     // Count tests used this calendar month
-    const now = new Date()
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
+    // Use billing period anchored to renewal date, not calendar month
+    const expiresAt = rows[0]?.expires_at ? new Date(rows[0].expires_at) : null
+    const periodStart = expiresAt
+      ? new Date(expiresAt.getFullYear(), expiresAt.getMonth() - 1, expiresAt.getDate()).toISOString()
+      : new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+    const periodEnd = expiresAt ? expiresAt.toISOString() : new Date().toISOString()
 
     const usageRows = await sql`
       SELECT COUNT(*) as count FROM audits
       WHERE user_email = ${email}
-      AND timestamp >= ${monthStart}
-      AND timestamp <= ${monthEnd}
+      AND timestamp >= ${periodStart}
+      AND timestamp <= ${periodEnd}
     `
     const testsUsed = parseInt(usageRows[0]?.count ?? '0')
 
