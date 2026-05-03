@@ -367,7 +367,7 @@ export default function LandingPage() {
               </div>
               <div className="space-y-2.5 mb-8">
                 {[
-                  '200 tests per month',
+                  'Unlimited tests per month',
                   '200+ adversarial probes (updated monthly)',
                   'PDF reports + CSV export',
                   'API access for CI/CD integration',

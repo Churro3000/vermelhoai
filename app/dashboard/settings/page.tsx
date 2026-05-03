@@ -2,7 +2,33 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Shield, ArrowLeft, CheckCircle, Loader2, User, Lock, CreditCard } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Loader2, User, Lock, CreditCard } from 'lucide-react'
+
+function ShieldLogo({ size = 27, textColor = 'text-gray-900' }: { size?: number; textColor?: string }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div style={{ position: 'relative', width: size, height: size }}>
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="shadowFade" x1="12" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#8B1010" stopOpacity="0.45" />
+              <stop offset="100%" stopColor="#5A0808" stopOpacity="0.8" />
+            </linearGradient>
+            <clipPath id="rightHalf">
+              <rect x="12" y="0" width="12" height="24" />
+            </clipPath>
+          </defs>
+          <path d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22C16.6 20.7 20 16.25 20 11.5V5.5L12 2Z" fill="#CC1A1A" />
+          <path d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22C16.6 20.7 20 16.25 20 11.5V5.5L12 2Z" fill="url(#shadowFade)" clipPath="url(#rightHalf)" />
+        </svg>
+        <span style={{ position: 'absolute', top: '22%', right: '26%', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'white', fontSize: size * 0.22, lineHeight: 1, userSelect: 'none' }}>V</span>
+      </div>
+      <span className={`font-bold tracking-tight ${textColor}`} style={{ fontFamily: 'var(--font-display)', fontSize: size * 0.67 }}>
+        Vermelho<span className="text-[#CC1A1A]">AI</span>
+      </span>
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -87,11 +113,8 @@ export default function SettingsPage() {
       {/* NAV */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-[1280px] mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Shield className="w-7 h-7 text-[#CC1A1A]" strokeWidth={2} />
-            <span className="font-bold text-lg text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>
-              Vermelho<span className="text-[#CC1A1A]">AI</span>
-            </span>
+          <Link href="/">
+            <ShieldLogo size={28} textColor="text-gray-900" />
           </Link>
           <Link href="/dashboard">
             <button className="flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm font-semibold transition-colors">
