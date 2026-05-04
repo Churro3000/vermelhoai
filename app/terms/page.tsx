@@ -47,7 +47,7 @@ export default function TermsPage() {
           <h1 className="text-3xl font-black text-gray-900 mb-2" style={{ fontFamily: 'var(--font-display)' }}>
             Terms of Service
           </h1>
-          <p className="text-gray-400 text-sm mb-8">Last updated: April 2026</p>
+          <p className="text-gray-400 text-sm mb-8">Last updated: May 2026</p>
 
           <div className="space-y-8 text-gray-600 text-sm leading-relaxed">
 
@@ -118,6 +118,20 @@ export default function TermsPage() {
                 7. Free Trial
               </h2>
               <p>New subscribers receive a 7-day free trial. No charge is made during the trial period. If you cancel before the trial ends, you will not be charged. After the trial period, your subscription will automatically convert to a paid plan at the applicable rate.</p>
+            </section>
+
+            <section>
+              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+                7a. Monthly Test Allowance and Reset Policy
+              </h2>
+              <p className="mb-3">Subscription plans that include a monthly test allowance (currently the Starter plan at 50 tests per month) are subject to the following conditions:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>Your monthly test allowance resets automatically on your billing renewal date each month, regardless of how many tests were used during the preceding period.</li>
+                <li>Unused tests do not carry over to the following billing period. Any tests remaining at the end of a billing period are forfeited upon renewal.</li>
+                <li>It is the sole responsibility of the subscriber to utilise their allocated tests within each billing period. VermelhoAI does not provide refunds, credits, or compensation for unused tests at the time of renewal.</li>
+                <li>The Professional plan currently offers unlimited tests per billing period and is not subject to a monthly test cap.</li>
+              </ul>
+              <p className="mt-3">By subscribing to a plan with a monthly test allowance, you acknowledge and accept that unused tests will not roll over and that the allowance resets on each renewal date irrespective of usage.</p>
             </section>
 
             <section>
