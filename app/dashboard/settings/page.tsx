@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle, Loader2, User, Lock, CreditCard } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Loader2, User, Lock, CreditCard, Key, Copy, Eye, EyeOff, Trash2 } from 'lucide-react'
 
 function ShieldLogo({ size = 27, textColor = 'text-gray-900' }: { size?: number; textColor?: string }) {
   return (
@@ -35,10 +35,23 @@ export default function SettingsPage() {
   const [user, setUser] = useState<{ email: string; name: string } | null>(null)
   const [userPlan, setUserPlan] = useState<string>('free')
   const [loading, setLoading] = useState(true)
+
+  // Password form
   const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' })
   const [passwordLoading, setPasswordLoading] = useState(false)
   const [passwordMsg, setPasswordMsg] = useState('')
   const [passwordError, setPasswordError] = useState('')
+
+  // API key
+  const [hasKey, setHasKey] = useState(false)
+  const [keyPrefix, setKeyPrefix] = useState('')
+  const [keyCreatedAt, setKeyCreatedAt] = useState('')
+  const [newlyGeneratedKey, setNewlyGeneratedKey] = useState('')
+  const [showKey, setShowKey] = useState(false)
+  const [keyLoading, setKeyLoading] = useState(false)
+  const [keyMsg, setKeyMsg] = useState('')
+  const [keyError, setKeyError] = useState('')
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -59,6 +72,19 @@ export default function SettingsPage() {
       .then(data => setUserPlan(data.plan ?? 'free'))
       .catch(() => setUserPlan('free'))
   }, [])
+
+  useEffect(() => {
+    if (userPlan === 'professional') {
+      fetch('/api/user/api-keys')
+        .then(res => res.json())
+        .then(data => {
+          setHasKey(data.hasKey ?? false)
+          setKeyPrefix(data.keyPrefix ?? '')
+          setKeyCreatedAt(data.createdAt ?? '')
+        })
+        .catch(() => {})
+    }
+  }, [userPlan])
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,6 +120,54 @@ export default function SettingsPage() {
     } finally {
       setPasswordLoading(false)
     }
+  }
+
+  const handleGenerateKey = async () => {
+    if (hasKey && !confirm('This will revoke your existing API key. Any integrations using it will stop working. Continue?')) return
+    setKeyLoading(true)
+    setKeyError('')
+    setKeyMsg('')
+    setNewlyGeneratedKey('')
+    try {
+      const res = await fetch('/api/user/api-keys', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) {
+        setKeyError(data.error || 'Failed to generate key.')
+      } else {
+        setNewlyGeneratedKey(data.key)
+        setKeyPrefix(data.keyPrefix)
+        setHasKey(true)
+        setShowKey(true)
+        setKeyMsg('API key generated. Copy it now — it will not be shown again.')
+      }
+    } catch {
+      setKeyError('Something went wrong. Please try again.')
+    } finally {
+      setKeyLoading(false)
+    }
+  }
+
+  const handleRevokeKey = async () => {
+    if (!confirm('Revoke your API key? Any integrations using it will stop working immediately.')) return
+    setKeyLoading(true)
+    setKeyError('')
+    try {
+      await fetch('/api/user/api-keys', { method: 'DELETE' })
+      setHasKey(false)
+      setKeyPrefix('')
+      setNewlyGeneratedKey('')
+      setKeyMsg('')
+    } catch {
+      setKeyError('Failed to revoke key.')
+    } finally {
+      setKeyLoading(false)
+    }
+  }
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(newlyGeneratedKey)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   if (loading) return (
@@ -137,11 +211,9 @@ export default function SettingsPage() {
             </div>
             <h2 className="font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>Account</h2>
           </div>
-          <div className="space-y-3">
-            <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Email</p>
-              <p className="text-gray-900 text-sm font-medium">{user.email}</p>
-            </div>
+          <div>
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Email</p>
+            <p className="text-gray-900 text-sm font-medium">{user.email}</p>
           </div>
         </div>
 
@@ -176,10 +248,94 @@ export default function SettingsPage() {
           </div>
           {userPlan !== 'free' && (
             <p className="text-xs text-gray-400 mt-3">
-              To cancel or change your plan, click Manage billing. You will be taken to the Lemon Squeezy customer portal.
+              To cancel or change your plan, click Manage billing to access the Lemon Squeezy customer portal.
             </p>
           )}
         </div>
+
+        {/* API KEY — Professional only */}
+        {userPlan === 'professional' && (
+          <div className="card mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 bg-[#FEF2F2] rounded-lg flex items-center justify-center">
+                <Key className="w-4 h-4 text-[#CC1A1A]" />
+              </div>
+              <div>
+                <h2 className="font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>API Access</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Use your API key to trigger scans from CI/CD pipelines</p>
+              </div>
+            </div>
+
+            {/* Newly generated key — show once */}
+            {newlyGeneratedKey && (
+              <div className="bg-[#F0FDF4] border border-[#00A651]/30 rounded-lg p-4 mb-4">
+                <p className="text-xs font-semibold text-[#00A651] mb-2">{keyMsg}</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-xs bg-white border border-gray-200 rounded px-3 py-2 font-mono text-gray-800 truncate">
+                    {showKey ? newlyGeneratedKey : '•'.repeat(40)}
+                  </code>
+                  <button onClick={() => setShowKey(!showKey)} className="text-gray-400 hover:text-gray-700 shrink-0">
+                    {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                  <button onClick={handleCopy} className="btn-outline text-xs py-1.5 px-3 shrink-0">
+                    {copied ? <><CheckCircle className="w-3.5 h-3.5 text-[#00A651]" /> Copied</> : <><Copy className="w-3.5 h-3.5" /> Copy</>}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Existing key info */}
+            {hasKey && !newlyGeneratedKey && (
+              <div className="bg-[#F8F8F5] border border-gray-200 rounded-lg p-4 mb-4">
+                <p className="text-xs text-gray-500 font-medium mb-1">Active API key</p>
+                <code className="text-sm font-mono text-gray-700">{keyPrefix}</code>
+                {keyCreatedAt && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Created {new Date(keyCreatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {!hasKey && !newlyGeneratedKey && (
+              <p className="text-sm text-gray-400 mb-4">No API key generated yet.</p>
+            )}
+
+            {keyError && <p className="text-[#CC1A1A] text-sm mb-4">{keyError}</p>}
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleGenerateKey}
+                disabled={keyLoading}
+                className="btn-red text-sm py-2 px-4 disabled:opacity-60"
+              >
+                {keyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : hasKey ? 'Regenerate key' : 'Generate API key'}
+              </button>
+              {hasKey && (
+                <button
+                  onClick={handleRevokeKey}
+                  disabled={keyLoading}
+                  className="btn-outline text-sm py-2 px-4 flex items-center gap-2 disabled:opacity-60"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Revoke
+                </button>
+              )}
+            </div>
+
+            {/* Usage docs */}
+            <div className="mt-5 pt-4 border-t border-gray-100">
+              <p className="text-xs font-semibold text-gray-600 mb-2">How to use in CI/CD:</p>
+              <pre className="text-xs bg-[#0D0D0B] text-gray-300 rounded-lg p-4 overflow-x-auto leading-relaxed">{`curl -X POST https://vermelhoai.vercel.app/api/v1/scan \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "endpointUrl": "https://your-ai.com/api/chat",
+    "apiKey": "your-ai-api-key"
+  }'`}</pre>
+              <p className="text-xs text-gray-400 mt-2">The response includes a <code className="font-mono">reportUrl</code> linking directly to your report in the dashboard.</p>
+            </div>
+          </div>
+        )}
 
         {/* CHANGE PASSWORD */}
         <div className="card mb-6">
