@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Probe limit — all paid plans get full built-in library, free gets 10
-    const probeLimit = userPlan === 'free' ? 10 : probes.length
+    const probeLimit = userPlan === 'free' ? 10 : probes.length // starter + professional both get full library
     const activeProbes = probes.slice(0, probeLimit)
 
     // Merge custom probes for Professional users

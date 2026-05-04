@@ -106,7 +106,7 @@ export default function UpgradePage() {
             <div className="space-y-3 mb-8">
               {[
                 '50 tests per month',
-                '100+ adversarial probes',
+                '200+ adversarial probes (updated monthly)',
                 'PDF security reports',
                 'Email support (72hr response)',
               ].map(f => (

@@ -339,7 +339,7 @@ export default function LandingPage() {
                 <p className="text-[#00A651] text-xs font-semibold mt-2.5">7-day free trial included</p>
               </div>
               <div className="space-y-2.5 mb-8">
-                {['50 tests per month', '100+ adversarial probes', 'PDF security reports', 'Email support'].map(f => (
+                {['50 tests per month', '200+ adversarial probes (updated monthly)', 'PDF security reports', 'Email support'].map(f => (
                   <div key={f} className="flex items-center gap-2.5 text-sm text-gray-600">
                     <Check className="w-3.5 h-3.5 text-[#00A651] shrink-0" /> {f}
                   </div>
