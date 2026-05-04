@@ -1,8 +1,8 @@
 'use client'
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, ChevronDown, X, CheckCircle, Clock, Loader2, Target, Zap } from 'lucide-react'
+import { Plus, ChevronDown, X, CheckCircle, Clock, Loader2, Target, Zap, Upload, Trash2 } from 'lucide-react'
 
 interface Audit {
   audit_id: string
@@ -12,6 +12,14 @@ interface Audit {
   risk_level: string
   total_probes: number
   vulnerabilities_found: number
+}
+
+interface CustomProbe {
+  probe_id: string
+  category: string
+  prompt: string
+  severity: string
+  created_at: string
 }
 
 const riskBadge = (level: string) => {
@@ -53,6 +61,7 @@ function DashboardContent() {
   const [audits, setAudits] = useState<Audit[]>([])
   const [auditsLoading, setAuditsLoading] = useState(true)
   const [showNewAudit, setShowNewAudit] = useState(false)
+  const [showCustomProbes, setShowCustomProbes] = useState(false)
   const [auditForm, setAuditForm] = useState({ url: '', apiKey: '', notes: '' })
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
@@ -60,6 +69,12 @@ function DashboardContent() {
   const [userPlan, setUserPlan] = useState<string>('free')
   const [testsUsed, setTestsUsed] = useState<number>(0)
   const [testLimit, setTestLimit] = useState<number | null>(10)
+  const [customProbes, setCustomProbes] = useState<CustomProbe[]>([])
+  const [customProbesLoading, setCustomProbesLoading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const [uploadSuccess, setUploadSuccess] = useState('')
+  const [uploadLoading, setUploadLoading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const searchParams = useSearchParams()
   const paymentStatus = searchParams.get('payment')
 
@@ -94,6 +109,17 @@ function DashboardContent() {
       .catch(() => setAuditsLoading(false))
   }, [])
 
+  useEffect(() => {
+    if (userPlan === 'professional') {
+      setCustomProbesLoading(true)
+      fetch('/api/custom-probes')
+        .then(res => res.ok ? res.json() : { probes: [] })
+        .then(data => setCustomProbes(data.probes ?? []))
+        .catch(() => {})
+        .finally(() => setCustomProbesLoading(false))
+    }
+  }, [userPlan])
+
   const handleSignOut = async () => {
     await fetch('/api/auth/signout', { method: 'POST' })
     router.push('/')
@@ -120,6 +146,65 @@ function DashboardContent() {
     }
   }
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadError('')
+    setUploadSuccess('')
+    setUploadLoading(true)
+
+    try {
+      const text = await file.text()
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(text)
+      } catch {
+        setUploadError('Invalid JSON file. Please check the format.')
+        setUploadLoading(false)
+        return
+      }
+
+      // Accept either { probes: [...] } or just [...]
+      const probesArray = Array.isArray(parsed) ? parsed : (parsed as Record<string, unknown>)?.probes
+
+      if (!Array.isArray(probesArray)) {
+        setUploadError('File must contain a "probes" array or be an array of probes.')
+        setUploadLoading(false)
+        return
+      }
+
+      const res = await fetch('/api/custom-probes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ probes: probesArray }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setUploadError(data.error || 'Upload failed.')
+        setUploadLoading(false)
+        return
+      }
+
+      setUploadSuccess(`${data.count} custom probe${data.count === 1 ? '' : 's'} uploaded successfully.`)
+      // Refresh custom probes list
+      const refreshed = await fetch('/api/custom-probes').then(r => r.json())
+      setCustomProbes(refreshed.probes ?? [])
+    } catch {
+      setUploadError('Failed to read file. Please try again.')
+    } finally {
+      setUploadLoading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const handleDeleteCustomProbes = async () => {
+    if (!confirm('Delete all your custom probes? This cannot be undone.')) return
+    await fetch('/api/custom-probes', { method: 'DELETE' })
+    setCustomProbes([])
+    setUploadSuccess('')
+    setUploadError('')
+  }
+
   if (loading) return (
     <div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center">
       <Loader2 className="w-8 h-8 text-[#CC1A1A] animate-spin" />
@@ -141,7 +226,6 @@ function DashboardContent() {
           <Link href="/">
             <ShieldLogo size={28} textColor="text-gray-900" />
           </Link>
-
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -234,7 +318,6 @@ function DashboardContent() {
                   {userPlan === 'starter' ? 'Starter Plan' : 'Professional Plan'} — active
                 </p>
               </div>
-              {/* Usage — only show for Starter, Professional is unlimited */}
               {userPlan === 'starter' && testLimit !== null && (
                 <div className="flex items-center gap-3 text-sm">
                   <span className={`font-semibold ${isAtLimit ? 'text-[#CC1A1A]' : 'text-gray-700'}`}>
@@ -252,11 +335,10 @@ function DashboardContent() {
                 <span className="text-green-700 text-xs font-medium">Unlimited tests</span>
               )}
             </div>
-            {/* At limit warning */}
             {isAtLimit && userPlan === 'starter' && (
               <div className="mt-3 pt-3 border-t border-green-200 flex items-center justify-between gap-4">
                 <p className="text-[#CC1A1A] text-xs font-semibold">
-                  Monthly limit reached. Resets on the 1st of next month.
+                  Monthly limit reached. Resets on your next renewal date.
                 </p>
                 <Link href="/dashboard/upgrade">
                   <button className="btn-red text-xs py-1.5 px-3 flex items-center gap-1.5">
@@ -303,13 +385,26 @@ function DashboardContent() {
               </h1>
               <p className="text-gray-500 mt-1 text-sm">Ready to red team your AI?</p>
             </div>
-            <button
-              onClick={() => setShowNewAudit(true)}
-              disabled={isAtLimit}
-              className="btn-red flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Plus className="w-4 h-4" /> Run New Test
-            </button>
+            <div className="flex items-center gap-2">
+              {userPlan === 'professional' && (
+                <button
+                  onClick={() => setShowCustomProbes(true)}
+                  className="btn-outline text-sm py-2 px-4 flex items-center gap-2"
+                >
+                  <Upload className="w-3.5 h-3.5" /> Custom probes
+                  {customProbes.length > 0 && (
+                    <span className="badge badge-gray text-xs py-0 px-1.5">{customProbes.length}</span>
+                  )}
+                </button>
+              )}
+              <button
+                onClick={() => setShowNewAudit(true)}
+                disabled={isAtLimit}
+                className="btn-red flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-4 h-4" /> Run New Test
+              </button>
+            </div>
           </div>
         </div>
 
@@ -425,7 +520,6 @@ function DashboardContent() {
             >
               <X className="w-5 h-5" />
             </button>
-
             <div className="flex items-center gap-3 mb-1">
               <div className="w-9 h-9 bg-[#FEF2F2] rounded-lg flex items-center justify-center">
                 <Target className="w-5 h-5 text-[#CC1A1A]" />
@@ -435,10 +529,11 @@ function DashboardContent() {
               </h2>
             </div>
             <p className="text-gray-500 text-sm mb-6 ml-12">
-              Enter your AI endpoint. 200+ adversarial probes will run against it.
+              Enter your AI endpoint. {userPlan === 'professional' && customProbes.length > 0
+                ? `200+ built-in probes + ${customProbes.length} custom probe${customProbes.length === 1 ? '' : 's'} will run.`
+                : '200+ adversarial probes will run against it.'}
             </p>
 
-            {/* Usage reminder in modal */}
             {testLimit !== null && (
               <div className="mb-4 px-3 py-2 bg-[#F8F8F5] rounded-lg border border-gray-200 flex items-center justify-between">
                 <span className="text-xs text-gray-500 font-medium">
@@ -452,9 +547,7 @@ function DashboardContent() {
 
             <form onSubmit={handleSubmitAudit} className="space-y-4">
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
-                  AI endpoint URL
-                </label>
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">AI endpoint URL</label>
                 <input
                   required
                   type="url"
@@ -465,9 +558,7 @@ function DashboardContent() {
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
-                  API key
-                </label>
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">API key</label>
                 <input
                   required
                   type="password"
@@ -492,11 +583,7 @@ function DashboardContent() {
                   onChange={e => setAuditForm({ ...auditForm, notes: e.target.value })}
                 />
               </div>
-
-              {auditError && (
-                <p className="text-[#CC1A1A] text-sm font-semibold">{auditError}</p>
-              )}
-
+              {auditError && <p className="text-[#CC1A1A] text-sm font-semibold">{auditError}</p>}
               <button
                 type="submit"
                 disabled={isRunning}
@@ -507,13 +594,115 @@ function DashboardContent() {
                   : <><CheckCircle className="w-4 h-4" /> Launch audit</>
                 }
               </button>
-
               {isRunning && (
                 <p className="text-center text-gray-400 text-xs">
                   This takes 5–15 minutes. Don't close this tab.
                 </p>
               )}
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM PROBES MODAL — Professional only */}
+      {showCustomProbes && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4">
+          <div className="card max-w-lg w-full relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => { setShowCustomProbes(false); setUploadError(''); setUploadSuccess('') }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-9 h-9 bg-[#FEF2F2] rounded-lg flex items-center justify-center">
+                <Upload className="w-5 h-5 text-[#CC1A1A]" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>
+                Custom probes
+              </h2>
+            </div>
+            <p className="text-gray-500 text-sm mb-6 ml-12">
+              Upload your own probes to run alongside the built-in 200+ library. Max 50 probes per upload.
+            </p>
+
+            {/* Format guide */}
+            <div className="bg-[#F8F8F5] rounded-lg border border-gray-200 p-4 mb-5">
+              <p className="text-xs font-semibold text-gray-700 mb-2">Expected JSON format:</p>
+              <pre className="text-xs text-gray-500 overflow-x-auto leading-relaxed">{`{
+  "probes": [
+    {
+      "id": "my-probe-1",
+      "category": "Custom",
+      "prompt": "Your test prompt here",
+      "severity": "High"
+    }
+  ]
+}`}</pre>
+              <p className="text-xs text-gray-400 mt-2">Severity options: Critical, High, Medium, Low</p>
+            </div>
+
+            {/* Upload button */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadLoading}
+              className="btn-outline w-full justify-center py-2.5 text-sm mb-4 disabled:opacity-60"
+            >
+              {uploadLoading
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
+                : <><Upload className="w-4 h-4" /> Select JSON file</>
+              }
+            </button>
+
+            {uploadError && (
+              <p className="text-[#CC1A1A] text-sm font-semibold mb-4">{uploadError}</p>
+            )}
+            {uploadSuccess && (
+              <div className="flex items-center gap-2 text-[#00A651] text-sm font-semibold mb-4">
+                <CheckCircle className="w-4 h-4" /> {uploadSuccess}
+              </div>
+            )}
+
+            {/* Current custom probes list */}
+            {customProbesLoading ? (
+              <div className="flex justify-center py-6">
+                <Loader2 className="w-5 h-5 text-[#CC1A1A] animate-spin" />
+              </div>
+            ) : customProbes.length > 0 ? (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-semibold text-gray-700">
+                    {customProbes.length} custom probe{customProbes.length === 1 ? '' : 's'} active
+                  </p>
+                  <button
+                    onClick={handleDeleteCustomProbes}
+                    className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#CC1A1A] transition-colors font-medium"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Delete all
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {customProbes.map(p => (
+                    <div key={p.probe_id} className="flex items-center justify-between px-3 py-2 bg-[#F8F8F5] rounded-lg border border-gray-200">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-gray-700 truncate">{p.probe_id}</p>
+                        <p className="text-xs text-gray-400 truncate">{p.category} · {p.severity}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400 text-center py-4">No custom probes uploaded yet.</p>
+            )}
           </div>
         </div>
       )}
