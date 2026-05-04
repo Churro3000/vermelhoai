@@ -59,13 +59,32 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Probe limit — all paid plans get full 200+ probe library
+    // Probe limit — all paid plans get full built-in library, free gets 10
     const probeLimit = userPlan === 'free' ? 10 : probes.length
     const activeProbes = probes.slice(0, probeLimit)
 
+    // Merge custom probes for Professional users
+    let allProbes = [...activeProbes]
+    if (userPlan === 'professional') {
+      const customRows = await sql`
+        SELECT probe_id, category, prompt, severity
+        FROM custom_probes
+        WHERE user_email = ${userEmail}
+      `
+      if (customRows.length > 0) {
+        const customProbes = customRows.map(r => ({
+          id: `custom-${r.probe_id}`,
+          category: r.category,
+          prompt: r.prompt,
+          severity: r.severity as 'Critical' | 'High' | 'Medium' | 'Low',
+        }))
+        allProbes = [...activeProbes, ...customProbes]
+      }
+    }
+
     // Step 1: Run all probes sequentially, collect raw responses
     const rawResults = []
-    for (const attack of activeProbes) {
+    for (const attack of allProbes) {
       try {
         const res = await fetch(endpointUrl, {
           method: 'POST',
