@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     try {
       const { resend } = await import('@/lib/emails/resend')
       await resend.emails.send({
-        from: 'VermelhoAI <onboarding@resend.dev>',
+        from: 'VermelhoAI <hello.vermelhoai@gmail.com>',
         to: email,
         subject: 'Reset your VermelhoAI password',
         html: `

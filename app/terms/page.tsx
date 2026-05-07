@@ -171,9 +171,16 @@ export default function TermsPage() {
 
             <section>
               <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
-                13. Contact
+                13. Official Communications
               </h2>
-              <p>For questions about these Terms of Service, contact us at <a href="mailto:hello@vermelhoai.com" className="text-[#CC1A1A] hover:underline">hello@vermelhoai.com</a></p>
+              <p>VermelhoAI communicates with users exclusively via <a href="mailto:hello.vermelhoai@gmail.com" className="text-[#CC1A1A] hover:underline">hello.vermelhoai@gmail.com</a> (and hello@vermelhoai.com once domain verification is complete). We will never contact you from any other email address. If you receive a message claiming to be from VermelhoAI from a different address, treat it as fraudulent and do not click any links.</p>
+            </section>
+
+            <section>
+              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+                14. Contact
+              </h2>
+              <p>For questions about these Terms of Service, contact us at <a href="mailto:hello.vermelhoai@gmail.com" className="text-[#CC1A1A] hover:underline">hello.vermelhoai@gmail.com</a></p>
             </section>
 
           </div>

@@ -134,7 +134,7 @@ export default function PrivacyPage() {
                 <li>Export your audit reports and data</li>
                 <li>Opt out of non-essential communications</li>
               </ul>
-              <p className="mt-3">To exercise any of these rights, contact us at <a href="mailto:hello@vermelhoai.com" className="text-[#CC1A1A] hover:underline">hello@vermelhoai.com</a></p>
+              <p className="mt-3">To exercise any of these rights, contact us at <a href="mailto:hello.vermelhoai@gmail.com" className="text-[#CC1A1A] hover:underline">hello@vermelhoai.com</a></p>
             </section>
 
             <section>
@@ -160,9 +160,16 @@ export default function PrivacyPage() {
 
             <section>
               <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
-                12. Contact
+                12. Official Communications
               </h2>
-              <p>For privacy-related questions or to exercise your rights, contact us at <a href="mailto:hello@vermelhoai.com" className="text-[#CC1A1A] hover:underline">hello@vermelhoai.com</a></p>
+              <p>VermelhoAI communicates with users exclusively via <a href="mailto:hello.vermelhoai@gmail.com" className="text-[#CC1A1A] hover:underline">hello.vermelhoai@gmail.com</a> (and hello@vermelhoai.com once domain verification is complete). We will never contact you from any other email address. If you receive a message claiming to be from VermelhoAI from a different address, treat it as fraudulent and do not click any links.</p>
+            </section>
+
+            <section>
+              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+                13. Contact
+              </h2>
+              <p>For privacy-related questions or to exercise your rights, contact us at <a href="mailto:hello.vermelhoai@gmail.com" className="text-[#CC1A1A] hover:underline">hello@vermelhoai.com</a></p>
             </section>
 
           </div>
