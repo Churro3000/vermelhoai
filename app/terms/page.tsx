@@ -26,6 +26,13 @@ function ShieldLogo({ size = 27, textColor = 'text-gray-900' }: { size?: number;
   )
 }
 
+const sectionTitle = {
+  fontFamily: 'var(--font-display)',
+  fontWeight: 700,
+  lineHeight: 1.4,
+  letterSpacing: '-0.01em',
+}
+
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F0]">
@@ -44,7 +51,7 @@ export default function TermsPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-16">
         <div className="card">
-          <h1 className="text-3xl font-black text-gray-900 mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'var(--font-display)', lineHeight: 1.3, letterSpacing: '-0.02em' }}>
             Terms of Service
           </h1>
           <p className="text-gray-400 text-sm mb-8">Last updated: May 2026</p>
@@ -52,21 +59,21 @@ export default function TermsPage() {
           <div className="space-y-8 text-gray-600 text-sm leading-relaxed">
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 1. Acceptance of Terms
               </h2>
               <p>By accessing or using VermelhoAI ("the Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the Service. These terms apply to all users, including visitors, registered users, and paying customers.</p>
             </section>
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 2. Description of Service
               </h2>
               <p>VermelhoAI is an AI red teaming platform that allows developers and organizations to test their AI systems against adversarial probes. The Service runs automated security tests against AI endpoints provided by users and generates security reports based on the results.</p>
             </section>
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 3. Authorized Use Only
               </h2>
               <p className="mb-3">You may only use VermelhoAI to test AI systems that you own or have explicit written authorization to test. By submitting an endpoint URL, you represent and warrant that:</p>
@@ -79,7 +86,7 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 4. Prohibited Uses
               </h2>
               <p className="mb-3">You may not use VermelhoAI to:</p>
@@ -94,14 +101,14 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 5. No Security Guarantee
               </h2>
               <p>VermelhoAI is a testing tool designed to help identify potential vulnerabilities. A passing score or low risk rating does not guarantee that your AI system is free from vulnerabilities. The Service tests against a defined set of known attack patterns and does not cover all possible attack vectors. You remain solely responsible for the security of your AI systems.</p>
             </section>
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 6. Subscriptions and Billing
               </h2>
               <p className="mb-3">VermelhoAI offers paid subscription plans billed monthly. By subscribing you agree to:</p>
@@ -114,14 +121,14 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 7. Free Trial
               </h2>
               <p>New subscribers receive a 7-day free trial. No charge is made during the trial period. If you cancel before the trial ends, you will not be charged. After the trial period, your subscription will automatically convert to a paid plan at the applicable rate.</p>
             </section>
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 7a. Monthly Test Allowance and Reset Policy
               </h2>
               <p className="mb-3">Subscription plans that include a monthly test allowance (currently the Starter plan at 50 tests per month) are subject to the following conditions:</p>
@@ -135,49 +142,49 @@ export default function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 8. Data and Privacy
               </h2>
               <p>API keys submitted for testing are used solely to conduct the authorized security test and are never stored permanently. Audit results and reports are stored securely and are only accessible to the account that generated them. See our <Link href="/privacy" className="text-[#CC1A1A] hover:underline">Privacy Policy</Link> for full details on data handling.</p>
             </section>
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 9. Intellectual Property
               </h2>
               <p>The VermelhoAI platform, probe library, reports, and all associated intellectual property remain the exclusive property of VermelhoAI. Security reports generated for your account are yours to use for internal security purposes. You may not redistribute or resell reports generated by the Service.</p>
             </section>
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 10. Limitation of Liability
               </h2>
               <p>To the maximum extent permitted by applicable law, VermelhoAI shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service. Our total liability to you for any claims arising from these terms shall not exceed the amount you paid us in the 3 months preceding the claim.</p>
             </section>
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 11. Disclaimer of Warranties
               </h2>
               <p>The Service is provided "as is" without warranties of any kind, either express or implied. We do not warrant that the Service will be uninterrupted, error-free, or completely secure. We disclaim all warranties including but not limited to merchantability, fitness for a particular purpose, and non-infringement.</p>
             </section>
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 12. Changes to Terms
               </h2>
               <p>We reserve the right to modify these terms at any time. We will notify users of material changes by email or by posting a notice on the Service. Continued use of the Service after changes constitutes acceptance of the new terms.</p>
             </section>
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 13. Official Communications
               </h2>
               <p>VermelhoAI communicates with users exclusively via <a href="mailto:hello.vermelhoai@gmail.com" className="text-[#CC1A1A] hover:underline">hello.vermelhoai@gmail.com</a>. We will never contact you from any other email address. If you receive a message claiming to be from VermelhoAI from a different address, treat it as fraudulent and do not click any links.</p>
             </section>
 
             <section>
-              <h2 className="text-lg font-black text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+              <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 14. Contact
               </h2>
               <p>For questions about these Terms of Service, contact us at <a href="mailto:hello.vermelhoai@gmail.com" className="text-[#CC1A1A] hover:underline">hello.vermelhoai@gmail.com</a></p>

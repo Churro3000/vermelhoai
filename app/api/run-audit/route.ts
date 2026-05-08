@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
           totalProbes: results.length,
           vulnerabilitiesFound: vulnCount,
           endpointUrl,
-          appUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'https://vermelhoai.vercel.app',
+          appUrl: process.env.NEXT_PUBLIC_APP_URL ?? 'https://vermelhoai.com',
         }),
       })
     } catch (emailErr) {

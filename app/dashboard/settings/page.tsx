@@ -325,7 +325,7 @@ export default function SettingsPage() {
             {/* Usage docs */}
             <div className="mt-5 pt-4 border-t border-gray-100">
               <p className="text-xs font-semibold text-gray-600 mb-2">How to use in CI/CD:</p>
-              <pre className="text-xs bg-[#0D0D0B] text-gray-300 rounded-lg p-4 overflow-x-auto leading-relaxed">{`curl -X POST https://vermelhoai.vercel.app/api/v1/scan \\
+              <pre className="text-xs bg-[#0D0D0B] text-gray-300 rounded-lg p-4 overflow-x-auto leading-relaxed">{`curl -X POST https://vermelhoai.com/api/v1/scan \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{

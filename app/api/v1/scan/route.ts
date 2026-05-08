@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
       VALUES (${auditId}, ${userEmail}, ${endpointUrl}, ${riskScore}, ${riskLevel}, ${results.length}, ${vulnCount}, ${JSON.stringify(results)})
     `
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://vermelhoai.vercel.app'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://vermelhoai.com'
 
     return NextResponse.json({
       auditId,

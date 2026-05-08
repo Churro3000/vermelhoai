@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       VALUES (${email}, ${token}, ${expiresAt.toISOString()})
     `
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://vermelhoai.vercel.app'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://vermelhoai.com'
     const resetUrl = `${appUrl}/reset-password?token=${token}`
 
     // Send reset email via Resend
