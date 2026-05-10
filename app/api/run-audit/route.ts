@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
       const { resend } = await import('@/lib/emails/resend')
       const { AuditCompleteEmail } = await import('@/lib/emails/auditComplete')
       await resend.emails.send({
-        from: 'VermelhoAI <hello.vermelhoai@gmail.com>',
+        from: 'VermelhoAI <hello@vermelhoai.com>',
         to: userEmail,
         subject: `Your AI Security Report is Ready — ${riskLevel} (${riskScore}/100)`,
         react: AuditCompleteEmail({

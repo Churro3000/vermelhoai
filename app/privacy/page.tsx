@@ -169,7 +169,7 @@ export default function PrivacyPage() {
               <h2 className="text-base font-bold text-gray-900 mb-3" style={sectionTitle}>
                 12. Official Communications
               </h2>
-              <p>VermelhoAI communicates with users exclusively via <a href="mailto:hello.vermelhoai@gmail.com" className="text-[#CC1A1A] hover:underline">hello.vermelhoai@gmail.com</a>. We will never contact you from any other email address. If you receive a message claiming to be from VermelhoAI from a different address, treat it as fraudulent and do not click any links.</p>
+              <p>VermelhoAI communicates with users via two official email addresses: <a href="mailto:hello@vermelhoai.com" className="text-[#CC1A1A] hover:underline">hello@vermelhoai.com</a> (automated notifications and system emails) and <a href="mailto:hello.vermelhoai@gmail.com" className="text-[#CC1A1A] hover:underline">hello.vermelhoai@gmail.com</a> (direct support and correspondence). We will never contact you from any other address. If you receive a message claiming to be from VermelhoAI from a different address, treat it as fraudulent and do not click any links.</p>
             </section>
 
             <section>
