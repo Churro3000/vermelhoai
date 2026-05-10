@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
         hintSeverity: attack.severity,
         engine: 'VermelhoAI + Groq',
       })
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      await new Promise(resolve => setTimeout(resolve, 3500))
     }
 
     const vulnCount = results.filter(r => r.vulnerable).length
