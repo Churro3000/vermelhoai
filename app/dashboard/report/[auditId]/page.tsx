@@ -547,7 +547,7 @@ export default function ReportPage() {
         {/* FOOTER STAMP */}
         <div className="p-4 border border-gray-200 rounded-xl bg-white text-center">
           <p className="text-gray-400 text-xs tracking-widest uppercase font-semibold">
-            VermelhoAI · AI Security Report · Powered by Groq LLM Analysis · {audit.auditId}
+            VermelhoAI · AI Security Report · {audit.auditId}
           </p>
         </div>
 
