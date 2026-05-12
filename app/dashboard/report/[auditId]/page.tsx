@@ -1,8 +1,8 @@
 'use client'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Download, ArrowLeft, AlertTriangle, CheckCircle, XCircle, Loader2, Target, Lock } from 'lucide-react'
+import { Download, ArrowLeft, AlertTriangle, CheckCircle, XCircle, Loader2, Target } from 'lucide-react'
 
 interface AttackResult {
   id: string
@@ -79,64 +79,6 @@ function ShieldLogo({ size = 27, textColor = 'text-gray-900' }: { size?: number;
   )
 }
 
-// ── Red loading bar ──
-function LoadingBar({ active, onComplete }: { active: boolean; onComplete: () => void }) {
-  const [progress, setProgress] = useState(0)
-  const [visible, setVisible] = useState(false)
-  const rafRef = useRef<number>()
-  const startRef = useRef<number>(0)
-
-  useEffect(() => {
-    if (!active) return
-    setVisible(true)
-    setProgress(0)
-    startRef.current = performance.now()
-
-    function tick(now: number) {
-      const elapsed = now - startRef.current
-      // Fast to 80% in 600ms, then slow crawl to 92%
-      let p = 0
-      if (elapsed < 600) {
-        p = (elapsed / 600) * 80
-      } else {
-        p = 80 + Math.min(((elapsed - 600) / 4000) * 12, 12)
-      }
-      setProgress(p)
-      if (p < 92) {
-        rafRef.current = requestAnimationFrame(tick)
-      }
-    }
-    rafRef.current = requestAnimationFrame(tick)
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
-  }, [active])
-
-  // When active turns false (download done), snap to 100 then hide
-  useEffect(() => {
-    if (active || !visible) return
-    setProgress(100)
-    const t = setTimeout(() => {
-      setVisible(false)
-      setProgress(0)
-      onComplete()
-    }, 400)
-    return () => clearTimeout(t)
-  }, [active, visible, onComplete])
-
-  if (!visible) return null
-
-  return (
-    <div className="fixed top-0 left-0 right-0 z-[999] h-0.5">
-      <div
-        className="h-full bg-[#CC1A1A] transition-all duration-300 ease-out"
-        style={{
-          width: `${progress}%`,
-          boxShadow: '0 0 8px rgba(204,26,26,0.8), 0 0 2px rgba(204,26,26,0.6)',
-        }}
-      />
-    </div>
-  )
-}
-
 export default function ReportPage() {
   const params = useParams()
   const router = useRouter()
@@ -146,16 +88,6 @@ export default function ReportPage() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'vulnerable' | 'passed'>('all')
   const [pdfLoading, setPdfLoading] = useState(false)
   const [pdfError, setPdfError] = useState('')
-  const [userPlan, setUserPlan] = useState<string>('free')
-  const [showCsvTooltip, setShowCsvTooltip] = useState(false)
-  const csvTooltipRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    fetch('/api/subscription')
-      .then(res => res.json())
-      .then(data => setUserPlan(data.plan ?? 'free'))
-      .catch(() => setUserPlan('free'))
-  }, [])
 
   useEffect(() => {
     const auditId = params?.auditId as string
@@ -173,17 +105,6 @@ export default function ReportPage() {
       .catch(() => { setNotFound(true); setLoading(false) })
   }, [params, router])
 
-  // Close CSV tooltip on outside click
-  useEffect(() => {
-    function handle(e: MouseEvent) {
-      if (csvTooltipRef.current && !csvTooltipRef.current.contains(e.target as Node)) {
-        setShowCsvTooltip(false)
-      }
-    }
-    document.addEventListener('mousedown', handle)
-    return () => document.removeEventListener('mousedown', handle)
-  }, [])
-
   const handleDownloadPdf = async () => {
     if (!audit) return
     setPdfLoading(true)
@@ -196,7 +117,10 @@ export default function ReportPage() {
         return
       }
       const blob = await res.blob()
-      if (blob.size === 0) { setPdfError('PDF generated but is empty'); return }
+      if (blob.size === 0) {
+        setPdfError('PDF generated but is empty')
+        return
+      }
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -239,7 +163,6 @@ export default function ReportPage() {
   const highCount = results.filter(r => r.severity === 'High' && r.vulnerable).length
   const gaugeColor = score >= 70 ? '#CC1A1A' : score >= 40 ? '#D97706' : '#00A651'
   const riskTextColor = score >= 70 ? 'text-[#CC1A1A]' : score >= 40 ? 'text-yellow-600' : 'text-[#00A651]'
-  const isProfessional = userPlan === 'professional'
 
   const filteredResults = results.filter(r => {
     if (activeFilter === 'vulnerable') return r.vulnerable
@@ -251,9 +174,6 @@ export default function ReportPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F0] flex flex-col">
-
-      {/* Loading bar */}
-      <LoadingBar active={pdfLoading} onComplete={() => {}} />
 
       {/* NAV */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
@@ -457,7 +377,7 @@ export default function ReportPage() {
           })}
         </div>
 
-        {/* REMEDIATION */}
+        {/* REMEDIATION — only show if vulnerabilities found */}
         {vulnCount > 0 && (
           <div className="card border-[#00A651]/30 mb-8">
             <h2 className="text-xl font-bold text-gray-900 mb-4" style={{ fontFamily: 'var(--font-display)' }}>
@@ -490,7 +410,7 @@ export default function ReportPage() {
         )}
 
         {/* ACTIONS */}
-        <div className="flex flex-wrap gap-3 mb-8 items-center">
+        <div className="flex flex-wrap gap-3 mb-8">
           <button
             onClick={handleDownloadPdf}
             disabled={pdfLoading}
@@ -501,37 +421,11 @@ export default function ReportPage() {
               : <><Download className="w-4 h-4" /> Download PDF report</>
             }
           </button>
-
-          {/* CSV button — gated for non-Professional */}
-          <div className="relative" ref={csvTooltipRef}>
-            {isProfessional ? (
-              <a href={`/api/audits/${audit.auditId}/csv`}>
-                <button className="btn-outline text-sm py-2.5 px-5 flex items-center gap-2">
-                  <Download className="w-4 h-4" /> Export CSV
-                </button>
-              </a>
-            ) : (
-              <button
-                onClick={() => setShowCsvTooltip(v => !v)}
-                className="btn-outline text-sm py-2.5 px-5 flex items-center gap-2 opacity-60"
-              >
-                <Lock className="w-4 h-4" /> Export CSV
-              </button>
-            )}
-            {showCsvTooltip && !isProfessional && (
-              <div className="absolute left-0 top-full mt-2 z-50 w-56 bg-gray-900 text-white text-xs rounded-lg px-3 py-2.5 shadow-xl">
-                <div className="absolute -top-1.5 left-5 w-3 h-3 bg-gray-900 rotate-45" />
-                <p className="font-semibold mb-1">Professional feature</p>
-                <p className="text-gray-400 leading-relaxed">CSV export is available on the Professional plan.</p>
-                <Link href="/dashboard/upgrade">
-                  <button className="mt-2 w-full bg-[#CC1A1A] text-white text-xs font-semibold py-1.5 rounded-md hover:bg-[#A01212] transition-colors">
-                    Upgrade to Professional
-                  </button>
-                </Link>
-              </div>
-            )}
-          </div>
-
+          <a href={`/api/audits/${audit.auditId}/csv`}>
+            <button className="btn-outline text-sm py-2.5 px-5 flex items-center gap-2">
+              <Download className="w-4 h-4" /> Export CSV
+            </button>
+          </a>
           <Link href="/dashboard">
             <button className="btn-outline text-sm py-2.5 px-5 flex items-center gap-2">
               <Target className="w-4 h-4" /> Run another audit
@@ -547,7 +441,7 @@ export default function ReportPage() {
         {/* FOOTER STAMP */}
         <div className="p-4 border border-gray-200 rounded-xl bg-white text-center">
           <p className="text-gray-400 text-xs tracking-widest uppercase font-semibold">
-            VermelhoAI · AI Security Report · {audit.auditId}
+            VermelhoAI · AI Security Report · Powered by Groq LLM Analysis · {audit.auditId}
           </p>
         </div>
 
