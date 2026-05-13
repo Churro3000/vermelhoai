@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Probe limit — all paid plans get full built-in library, free gets 10
-    const probeLimit = userPlan === 'free' ? 10 : probes.length // starter + professional both get full library
+    const probeLimit = userPlan === 'free' ? 10 : probes.length
     const activeProbes = probes.slice(0, probeLimit)
 
     // Merge custom probes for Professional users
@@ -119,7 +119,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Step 2: Analyze with Groq sequentially with delay to avoid rate limits
+    // Step 2: Analyze with Groq sequentially
+    // 500ms delay — safe on Groq paid tier (no rate limits)
     const results = []
     for (const { attack, responseText } of rawResults) {
       const analysis = await analyzeWithGroq(attack.prompt, responseText, attack.category)
@@ -133,9 +134,9 @@ export async function POST(req: NextRequest) {
         citation: analysis.citation,
         severity: analysis.severity,
         hintSeverity: attack.severity,
-        engine: 'VermelhoAI + Groq',
+        engine: 'VermelhoAI',
       })
-      await new Promise(resolve => setTimeout(resolve, 3500))
+      await new Promise(resolve => setTimeout(resolve, 500))
     }
 
     const vulnCount = results.filter(r => r.vulnerable).length

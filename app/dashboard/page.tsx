@@ -2,7 +2,7 @@
 import { Suspense, useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, ChevronDown, X, CheckCircle, Clock, Loader2, Target, Zap, Upload, Trash2 } from 'lucide-react'
+import { Plus, ChevronDown, X, CheckCircle, Clock, Loader2, Target, Zap, Upload, Trash2, Shield } from 'lucide-react'
 
 interface Audit {
   audit_id: string
@@ -54,6 +54,124 @@ function ShieldLogo({ size = 27, textColor = 'text-gray-900' }: { size?: number;
   )
 }
 
+// ── Full-screen audit loading overlay ──
+function AuditLoadingOverlay({ probeCount }: { probeCount: number }) {
+  const [progress, setProgress] = useState(0)
+  const [statusText, setStatusText] = useState('Initialising attack engine...')
+  const rafRef = useRef<number>()
+  const startRef = useRef<number>(0)
+
+  // Estimated duration: probeCount × 500ms delay + ~2s overhead, capped for display
+  const estimatedMs = probeCount * 500 + 2000
+
+  const statusMessages = [
+    { at: 0,  text: 'Initialising attack engine...' },
+    { at: 5,  text: 'Sending adversarial probes...' },
+    { at: 20, text: 'Running jailbreak tests...' },
+    { at: 35, text: 'Testing prompt injection vectors...' },
+    { at: 50, text: 'Probing system prompt extraction...' },
+    { at: 65, text: 'Running OWASP LLM Top 10 checks...' },
+    { at: 78, text: 'Analysing responses with AI...' },
+    { at: 88, text: 'Calculating risk score...' },
+    { at: 94, text: 'Finalising report...' },
+  ]
+
+  useEffect(() => {
+    setProgress(0)
+    startRef.current = performance.now()
+
+    function tick(now: number) {
+      const elapsed = now - startRef.current
+      // Grow quickly to 90%, then crawl — never reaches 100 until done
+      const raw = elapsed / estimatedMs
+      const p = Math.min(raw * 90, 90) + (raw > 1 ? Math.min((raw - 1) * 5, 8) : 0)
+      const capped = Math.min(p, 97)
+      setProgress(capped)
+
+      // Update status text based on progress
+      const msg = [...statusMessages].reverse().find(m => capped >= m.at)
+      if (msg) setStatusText(msg.text)
+
+      rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return (
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0D0D0B]/95 backdrop-blur-sm px-6">
+
+      {/* Top progress bar */}
+      <div className="fixed top-0 left-0 right-0 h-0.5 bg-white/10">
+        <div
+          className="h-full bg-[#CC1A1A] transition-all duration-500 ease-out"
+          style={{
+            width: `${progress}%`,
+            boxShadow: '0 0 12px rgba(204,26,26,0.9), 0 0 4px rgba(204,26,26,0.6)',
+          }}
+        />
+      </div>
+
+      {/* Center card */}
+      <div className="w-full max-w-md text-center">
+
+        {/* Animated shield icon */}
+        <div className="flex justify-center mb-8">
+          <div className="relative">
+            <div className="w-20 h-20 rounded-2xl bg-[#CC1A1A]/10 border border-[#CC1A1A]/20 flex items-center justify-center">
+              <Shield className="w-10 h-10 text-[#CC1A1A]" style={{ animation: 'pulse 2s ease-in-out infinite' }} />
+            </div>
+            {/* Spinning ring */}
+            <div
+              className="absolute inset-0 rounded-2xl border-2 border-transparent border-t-[#CC1A1A]"
+              style={{ animation: 'spin 1.5s linear infinite' }}
+            />
+          </div>
+        </div>
+
+        <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+          Audit in progress
+        </h2>
+        <p className="text-gray-400 text-sm mb-8 leading-relaxed">
+          Running {probeCount} adversarial probes against your AI endpoint.
+          <br />Each probe is tested and analysed individually.
+        </p>
+
+        {/* Progress bar */}
+        <div className="w-full bg-white/10 rounded-full h-2 mb-3 overflow-hidden">
+          <div
+            className="h-full bg-[#CC1A1A] rounded-full transition-all duration-500 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        <div className="flex items-center justify-between text-xs mb-8">
+          <span className="text-gray-500 font-medium">{statusText}</span>
+          <span className="text-gray-500 font-mono">{Math.round(progress)}%</span>
+        </div>
+
+        {/* Do not close warning */}
+        <div className="flex items-center justify-center gap-2.5 bg-[#CC1A1A]/10 border border-[#CC1A1A]/25 rounded-xl px-5 py-3.5">
+          <div className="w-2 h-2 rounded-full bg-[#CC1A1A] shrink-0" style={{ animation: 'pulse 1.5s ease-in-out infinite' }} />
+          <p className="text-[#FF6B6B] text-sm font-semibold">
+            Do not close or refresh this tab
+          </p>
+        </div>
+
+        <p className="text-gray-600 text-xs mt-4">
+          A report link will also be sent to your email when complete.
+        </p>
+      </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+      `}</style>
+    </div>
+  )
+}
+
 function DashboardContent() {
   const router = useRouter()
   const [user, setUser] = useState<{ email: string; name: string } | null>(null)
@@ -77,6 +195,9 @@ function DashboardContent() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const searchParams = useSearchParams()
   const paymentStatus = searchParams.get('payment')
+
+  // Probe count for loading overlay estimate
+  const probeCount = userPlan === 'free' ? 10 : 210
 
   useEffect(() => {
     fetch('/api/subscription')
@@ -129,6 +250,7 @@ function DashboardContent() {
     e.preventDefault()
     setIsRunning(true)
     setAuditError('')
+    setShowNewAudit(false) // Close modal, show loading overlay
     try {
       const res = await fetch('/api/run-audit', {
         method: 'POST',
@@ -136,13 +258,18 @@ function DashboardContent() {
         body: JSON.stringify({ endpointUrl: auditForm.url, apiKey: auditForm.apiKey }),
       })
       const data = await res.json()
-      if (!res.ok) { setAuditError(data.error || 'Audit failed.'); setIsRunning(false); return }
-      setShowNewAudit(false)
+      if (!res.ok) {
+        setAuditError(data.error || 'Audit failed.')
+        setIsRunning(false)
+        setShowNewAudit(true) // Re-open modal to show error
+        return
+      }
       setIsRunning(false)
       router.push(`/dashboard/report/${data.auditId}`)
     } catch {
       setAuditError('Could not connect to audit engine. Please try again.')
       setIsRunning(false)
+      setShowNewAudit(true) // Re-open modal to show error
     }
   }
 
@@ -164,7 +291,6 @@ function DashboardContent() {
         return
       }
 
-      // Accept either { probes: [...] } or just [...]
       const probesArray = Array.isArray(parsed) ? parsed : (parsed as Record<string, unknown>)?.probes
 
       if (!Array.isArray(probesArray)) {
@@ -186,7 +312,6 @@ function DashboardContent() {
       }
 
       setUploadSuccess(`${data.count} custom probe${data.count === 1 ? '' : 's'} uploaded successfully.`)
-      // Refresh custom probes list
       const refreshed = await fetch('/api/custom-probes').then(r => r.json())
       setCustomProbes(refreshed.probes ?? [])
     } catch {
@@ -219,6 +344,9 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F0] flex flex-col">
+
+      {/* Full-screen audit loading overlay */}
+      {isRunning && <AuditLoadingOverlay probeCount={probeCount} />}
 
       {/* NAV */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
@@ -589,16 +717,8 @@ function DashboardContent() {
                 disabled={isRunning}
                 className="btn-red w-full justify-center py-3.5 disabled:opacity-60"
               >
-                {isRunning
-                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Running probes...</>
-                  : <><CheckCircle className="w-4 h-4" /> Launch audit</>
-                }
+                <CheckCircle className="w-4 h-4" /> Launch audit
               </button>
-              {isRunning && (
-                <p className="text-center text-gray-400 text-xs">
-                  This takes 5–15 minutes. Don't close this tab.
-                </p>
-              )}
             </form>
           </div>
         </div>
@@ -627,7 +747,6 @@ function DashboardContent() {
               Upload your own probes to run alongside the built-in 200+ library. Max 50 probes per upload.
             </p>
 
-            {/* Format guide */}
             <div className="bg-[#F8F8F5] rounded-lg border border-gray-200 p-4 mb-5">
               <p className="text-xs font-semibold text-gray-700 mb-2">Expected JSON format:</p>
               <pre className="text-xs text-gray-500 overflow-x-auto leading-relaxed">{`{
@@ -643,7 +762,6 @@ function DashboardContent() {
               <p className="text-xs text-gray-400 mt-2">Severity options: Critical, High, Medium, Low</p>
             </div>
 
-            {/* Upload button */}
             <input
               ref={fileInputRef}
               type="file"
@@ -671,7 +789,6 @@ function DashboardContent() {
               </div>
             )}
 
-            {/* Current custom probes list */}
             {customProbesLoading ? (
               <div className="flex justify-center py-6">
                 <Loader2 className="w-5 h-5 text-[#CC1A1A] animate-spin" />
