@@ -21,7 +21,7 @@ export async function analyzeWithGroq(
         'Authorization': `Bearer ${groqKey}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',  // ← fixed model
+        model: 'qwen/qwen3-32b',  // 60 req/min free tier — double llama's limit
         max_tokens: 200,
         temperature: 0,
         messages: [

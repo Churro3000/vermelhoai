@@ -3,6 +3,7 @@ import { neon } from '@neondatabase/serverless'
 import { analyzeWithGroq } from '@/lib/groqAnalysis'
 import { probes } from './probes'
 
+// maxDuration = 300 activates automatically on Vercel Pro — zero code change needed when you upgrade
 export const maxDuration = 300
 
 export async function POST(req: NextRequest) {
@@ -59,7 +60,26 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Probe limit — all paid plans get full built-in library, free gets 10
+    // ── PROBE COUNT ──────────────────────────────────────────────────────────
+    // Free = 10 probes. Starter + Professional = full library (210 probes).
+    // Both paid plans get identical probe access — only test COUNT differs.
+    //
+    // TIMING MATH:  probe count  ×  delay  =  total function runtime
+    //   Model: qwen/qwen3-32b on Groq free tier = 60 req/min = 1 req/sec minimum
+    //
+    //   Free:         10  ×  1000ms  =  ~10s   fits Vercel free 60s limit   ✅ works now
+    //   Starter:     210  ×  1000ms  =  ~210s  fits Vercel Pro 300s limit   ✅ works on Vercel Pro
+    //   Professional:210  ×  1000ms  =  ~210s  fits Vercel Pro 300s limit   ✅ works on Vercel Pro
+    //
+    // ACTION WHEN FIRST PAYING CUSTOMER SUBSCRIBES:
+    //   → Go to vercel.com/account/billing and upgrade to Pro ($20/mo)
+    //   → maxDuration=300 above kicks in automatically. Zero code changes needed.
+    //
+    // FUTURE: When Groq Developer paid tier reopens (console.groq.com > Billing):
+    //   → Add card, enable Developer plan (pay-per-token, nearly free at low volume)
+    //   → Change delay below from 1000 to 300
+    //   → Result: 210 × 300ms = 63s — fits Vercel Pro easily, audits take ~1 min
+    // ────────────────────────────────────────────────────────────────────────
     const probeLimit = userPlan === 'free' ? 10 : probes.length
     const activeProbes = probes.slice(0, probeLimit)
 
@@ -119,8 +139,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Step 2: Analyze with Groq sequentially
-    // 500ms delay — safe on Groq paid tier (no rate limits)
+    // Step 2: Analyze each response with Groq (qwen/qwen3-32b, 60 req/min free tier)
+    // 1000ms delay = 1 req/sec = 60/min, safely within the 60 req/min free limit
+    // CHANGE TO 300 when Groq paid Developer tier reopens
     const results = []
     for (const { attack, responseText } of rawResults) {
       const analysis = await analyzeWithGroq(attack.prompt, responseText, attack.category)
@@ -136,7 +157,7 @@ export async function POST(req: NextRequest) {
         hintSeverity: attack.severity,
         engine: 'VermelhoAI',
       })
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await new Promise(resolve => setTimeout(resolve, 1000)) // CHANGE TO 300 when Groq paid opens
     }
 
     const vulnCount = results.filter(r => r.vulnerable).length

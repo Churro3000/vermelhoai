@@ -31,7 +31,6 @@ function ShieldLogo({ size = 27, textColor = 'text-gray-900' }: { size?: number;
             clipPath="url(#rightHalf)"
           />
         </svg>
-        {/* Real V character — top right of shield body */}
         <span
           style={{
             position: 'absolute',
@@ -65,19 +64,16 @@ export default function LandingPage() {
       {/* NAV */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
-          {/* Logo — flush left */}
           <Link href="/" className="shrink-0">
             <ShieldLogo size={32} textColor="text-gray-900" />
           </Link>
 
-          {/* Center links */}
           <div className="hidden md:flex items-center gap-7 absolute left-1/2 -translate-x-1/2">
             <a href="#how-it-works" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">How it works</a>
             <a href="#probes" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Probes</a>
             <a href="#pricing" className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors">Pricing</a>
           </div>
 
-          {/* CTA — flush right */}
           <div className="flex items-center gap-2 shrink-0">
             <Link href="/signin">
               <button className="btn-outline text-sm py-2 px-4">Sign in</button>
@@ -93,23 +89,19 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="pt-36 pb-28 relative overflow-hidden">
-        {/* Dot grid */}
         <div className="absolute inset-0 opacity-[0.035]" style={{
           backgroundImage: 'radial-gradient(circle at 1px 1px, #CC1A1A 1px, transparent 0)',
           backgroundSize: '36px 36px'
         }} />
-        {/* Glow blobs */}
         <div className="absolute top-16 right-[-80px] w-[480px] h-[480px] bg-[#CC1A1A]/6 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-[-40px] left-[-40px] w-72 h-72 bg-[#00A651]/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-6 relative">
-          {/* Badge */}
           <div className="badge badge-red mb-7 inline-flex">
             <div className="w-1.5 h-1.5 rounded-full bg-[#CC1A1A] animate-pulse" />
             200+ adversarial probes
           </div>
 
-          {/* Headline */}
           <h1
             className="text-5xl md:text-[64px] font-bold text-gray-900 leading-[1.08] tracking-tight mb-6 max-w-3xl"
             style={{ fontFamily: 'var(--font-display)' }}
@@ -118,12 +110,10 @@ export default function LandingPage() {
             <span className="text-[#CC1A1A]">Before someone else does.</span>
           </h1>
 
-          {/* Subheading */}
           <p className="text-lg text-gray-500 leading-relaxed mb-10 max-w-xl">
             VermelhoAI runs 200+ adversarial probes against your AI — jailbreaks, prompt injections, data extraction, goal hijacking, and more. Full security report in minutes.
           </p>
 
-          {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-start gap-3">
             <Link href="/signup">
               <button className="btn-red py-3 px-7 text-sm">
@@ -136,7 +126,7 @@ export default function LandingPage() {
               </button>
             </a>
           </div>
-          <p className="text-xs text-gray-400 mt-4 font-medium">No credit card required · Results in 5–30 minutes</p>
+          <p className="text-xs text-gray-400 mt-4 font-medium">No credit card required · Results in 5–20 minutes</p>
         </div>
       </section>
 
@@ -149,7 +139,6 @@ export default function LandingPage() {
             <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-[#CC1A1A]" /> Customer support AI</span>
             <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-[#CC1A1A]" /> Enterprise LLM apps</span>
             <span className="flex items-center gap-1.5">
-              {/* Mini shield — matches main logo style */}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <defs>
                   <linearGradient id="shadowFadeMini" x1="12" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
@@ -230,7 +219,7 @@ export default function LandingPage() {
               200+ probes across 10 attack categories
             </h2>
             <p className="text-base text-gray-400 max-w-xl">
-              Built from OWASP LLM Top 10, AutoDAN research, and real-world attack patterns. New probes added every month.
+              Built from OWASP LLM Top 10, AutoDAN research, and real-world attack patterns.
             </p>
           </div>
 
@@ -259,7 +248,7 @@ export default function LandingPage() {
 
           <div className="mt-8 flex items-center gap-2.5 text-gray-500 text-xs">
             <div className="w-2 h-2 rounded-full bg-[#00A651] shrink-0" />
-            New probes added monthly — Starter: 50 probes · Professional: 200+ probes
+            Starter: 50 tests/month · Professional: unlimited tests
           </div>
         </div>
       </section>
@@ -339,7 +328,7 @@ export default function LandingPage() {
                 <p className="text-[#00A651] text-xs font-semibold mt-2.5">7-day free trial included</p>
               </div>
               <div className="space-y-2.5 mb-8">
-                {['50 tests per month', '200+ adversarial probes (updated monthly)', 'PDF security reports', 'Email support'].map(f => (
+                {['50 tests per month', '200+ adversarial probes', 'PDF security reports', 'Email support'].map(f => (
                   <div key={f} className="flex items-center gap-2.5 text-sm text-gray-600">
                     <Check className="w-3.5 h-3.5 text-[#00A651] shrink-0" /> {f}
                   </div>
@@ -368,7 +357,7 @@ export default function LandingPage() {
               <div className="space-y-2.5 mb-8">
                 {[
                   'Unlimited tests per month',
-                  '200+ adversarial probes (updated monthly)',
+                  '200+ adversarial probes',
                   'PDF reports + CSV export',
                   'API access for CI/CD integration',
                   'Custom probe upload',
