@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Download, ArrowLeft, AlertTriangle, CheckCircle, XCircle, Loader2, Target, Lock } from 'lucide-react'
+import { Download, ArrowLeft, AlertTriangle, CheckCircle, XCircle, Loader2, Target, Lock, ChevronDown } from 'lucide-react'
 
 interface AttackResult {
   id: string
@@ -79,8 +79,8 @@ function ShieldLogo({ size = 27, textColor = 'text-gray-900' }: { size?: number;
   )
 }
 
-// ── Red loading bar ──
-function LoadingBar({ active, onComplete }: { active: boolean; onComplete: () => void }) {
+// ── Red loading bar (PDF download) ──
+function LoadingBar({ active }: { active: boolean }) {
   const [progress, setProgress] = useState(0)
   const [visible, setVisible] = useState(false)
   const rafRef = useRef<number>()
@@ -91,48 +91,28 @@ function LoadingBar({ active, onComplete }: { active: boolean; onComplete: () =>
     setVisible(true)
     setProgress(0)
     startRef.current = performance.now()
-
     function tick(now: number) {
       const elapsed = now - startRef.current
-      // Fast to 80% in 600ms, then slow crawl to 92%
-      let p = 0
-      if (elapsed < 600) {
-        p = (elapsed / 600) * 80
-      } else {
-        p = 80 + Math.min(((elapsed - 600) / 4000) * 12, 12)
-      }
+      let p = elapsed < 600 ? (elapsed / 600) * 80 : 80 + Math.min(((elapsed - 600) / 4000) * 12, 12)
       setProgress(p)
-      if (p < 92) {
-        rafRef.current = requestAnimationFrame(tick)
-      }
+      if (p < 92) rafRef.current = requestAnimationFrame(tick)
     }
     rafRef.current = requestAnimationFrame(tick)
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
   }, [active])
 
-  // When active turns false (download done), snap to 100 then hide
   useEffect(() => {
     if (active || !visible) return
     setProgress(100)
-    const t = setTimeout(() => {
-      setVisible(false)
-      setProgress(0)
-      onComplete()
-    }, 400)
+    const t = setTimeout(() => { setVisible(false); setProgress(0) }, 400)
     return () => clearTimeout(t)
-  }, [active, visible, onComplete])
+  }, [active, visible])
 
   if (!visible) return null
-
   return (
     <div className="fixed top-0 left-0 right-0 z-[999] h-0.5">
-      <div
-        className="h-full bg-[#CC1A1A] transition-all duration-300 ease-out"
-        style={{
-          width: `${progress}%`,
-          boxShadow: '0 0 8px rgba(204,26,26,0.8), 0 0 2px rgba(204,26,26,0.6)',
-        }}
-      />
+      <div className="h-full bg-[#CC1A1A] transition-all duration-300 ease-out"
+        style={{ width: `${progress}%`, boxShadow: '0 0 8px rgba(204,26,26,0.8)' }} />
     </div>
   )
 }
@@ -148,7 +128,10 @@ export default function ReportPage() {
   const [pdfError, setPdfError] = useState('')
   const [userPlan, setUserPlan] = useState<string>('free')
   const [showCsvTooltip, setShowCsvTooltip] = useState(false)
+  const [showScrollBtn, setShowScrollBtn] = useState(false)
   const csvTooltipRef = useRef<HTMLDivElement>(null)
+  const findingsTopRef = useRef<HTMLDivElement>(null)
+  const findingsBottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetch('/api/subscription')
@@ -166,14 +149,23 @@ export default function ReportPage() {
         if (!res.ok) { setNotFound(true); setLoading(false); return null }
         return res.json()
       })
-      .then(data => {
-        if (data) setAudit(data)
-        setLoading(false)
-      })
+      .then(data => { if (data) setAudit(data); setLoading(false) })
       .catch(() => { setNotFound(true); setLoading(false) })
   }, [params, router])
 
-  // Close CSV tooltip on outside click
+  // Show scroll button when user has scrolled past the findings header
+  useEffect(() => {
+    function onScroll() {
+      if (!findingsTopRef.current || !findingsBottomRef.current) return
+      const topRect = findingsTopRef.current.getBoundingClientRect()
+      const bottomRect = findingsBottomRef.current.getBoundingClientRect()
+      // Show when findings header is above viewport AND bottom of findings is still below viewport
+      setShowScrollBtn(topRect.bottom < 0 && bottomRect.top > window.innerHeight)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   useEffect(() => {
     function handle(e: MouseEvent) {
       if (csvTooltipRef.current && !csvTooltipRef.current.contains(e.target as Node)) {
@@ -190,11 +182,7 @@ export default function ReportPage() {
     setPdfError('')
     try {
       const res = await fetch(`/api/pdf/${audit.auditId}`)
-      if (!res.ok) {
-        const errorText = await res.text()
-        setPdfError(`Error ${res.status}: ${errorText}`)
-        return
-      }
+      if (!res.ok) { setPdfError(`Error ${res.status}: ${await res.text()}`); return }
       const blob = await res.blob()
       if (blob.size === 0) { setPdfError('PDF generated but is empty'); return }
       const url = window.URL.createObjectURL(blob)
@@ -212,6 +200,10 @@ export default function ReportPage() {
     }
   }
 
+  const scrollToBottomOfFindings = () => {
+    findingsBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
   if (loading) return (
     <div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center">
       <Loader2 className="w-8 h-8 text-[#CC1A1A] animate-spin" />
@@ -221,12 +213,8 @@ export default function ReportPage() {
   if (notFound || !audit) return (
     <div className="min-h-screen bg-[#F5F5F0] flex flex-col items-center justify-center gap-4">
       <AlertTriangle className="w-10 h-10 text-[#CC1A1A]" />
-      <p className="text-gray-900 font-bold text-xl" style={{ fontFamily: 'var(--font-display)' }}>
-        Audit not found
-      </p>
-      <Link href="/dashboard">
-        <button className="btn-red text-sm py-2 px-5">Back to Dashboard</button>
-      </Link>
+      <p className="text-gray-900 font-bold text-xl" style={{ fontFamily: 'var(--font-display)' }}>Audit not found</p>
+      <Link href="/dashboard"><button className="btn-red text-sm py-2 px-5">Back to Dashboard</button></Link>
     </div>
   )
 
@@ -252,15 +240,23 @@ export default function ReportPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F0] flex flex-col">
 
-      {/* Loading bar */}
-      <LoadingBar active={pdfLoading} onComplete={() => {}} />
+      <LoadingBar active={pdfLoading} />
+
+      {/* Scroll-to-bottom arrow — appears when scrolling through findings */}
+      {showScrollBtn && (
+        <button
+          onClick={scrollToBottomOfFindings}
+          className="fixed right-6 bottom-8 z-50 w-10 h-10 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 hover:shadow-xl transition-all duration-200"
+          aria-label="Jump to end of findings"
+        >
+          <ChevronDown className="w-5 h-5 text-gray-500" />
+        </button>
+      )}
 
       {/* NAV */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-[1280px] mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/">
-            <ShieldLogo size={28} textColor="text-gray-900" />
-          </Link>
+          <Link href="/"><ShieldLogo size={28} textColor="text-gray-900" /></Link>
           <Link href="/dashboard">
             <button className="flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm transition-colors font-semibold">
               <ArrowLeft className="w-4 h-4" /> Dashboard
@@ -284,24 +280,15 @@ export default function ReportPage() {
               ID: <span className="font-mono text-gray-600">{audit.auditId}</span>
             </p>
             {audit.endpointUrl && (
-              <p className="text-[#CC1A1A] text-xs mt-1 truncate max-w-md font-medium">
-                {audit.endpointUrl}
-              </p>
+              <p className="text-[#CC1A1A] text-xs mt-1 truncate max-w-md font-medium">{audit.endpointUrl}</p>
             )}
           </div>
-          <button
-            onClick={handleDownloadPdf}
-            disabled={pdfLoading}
-            className="btn-red flex items-center gap-2 text-sm py-2.5 px-5 disabled:opacity-60"
-          >
-            {pdfLoading
-              ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
-              : <><Download className="w-4 h-4" /> Download PDF</>
-            }
+          <button onClick={handleDownloadPdf} disabled={pdfLoading}
+            className="btn-red flex items-center gap-2 text-sm py-2.5 px-5 disabled:opacity-60">
+            {pdfLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><Download className="w-4 h-4" /> Download PDF</>}
           </button>
         </div>
 
-        {/* PDF ERROR */}
         {pdfError && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
             <p className="text-red-700 text-sm font-semibold">PDF Error: {pdfError}</p>
@@ -319,21 +306,15 @@ export default function ReportPage() {
                     strokeDasharray={`${(score / 100) * 264} 264`} strokeLinecap="round" />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-4xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>
-                    {score}
-                  </span>
+                  <span className="text-4xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>{score}</span>
                   <span className="text-xs text-gray-400">/100</span>
                 </div>
               </div>
-              <p className={`font-bold mt-2 text-sm ${riskTextColor}`} style={{ fontFamily: 'var(--font-display)' }}>
-                {audit.riskLevel}
-              </p>
+              <p className={`font-bold mt-2 text-sm ${riskTextColor}`} style={{ fontFamily: 'var(--font-display)' }}>{audit.riskLevel}</p>
             </div>
 
             <div className="flex-1 w-full">
-              <h2 className="text-xl font-bold text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
-                Executive Summary
-              </h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-3" style={{ fontFamily: 'var(--font-display)' }}>Executive Summary</h2>
               <p className="text-gray-500 text-sm leading-relaxed mb-5">
                 VermelhoAI ran{' '}
                 <span className="font-bold text-gray-900">{totalProbes} adversarial probes</span>{' '}
@@ -352,9 +333,7 @@ export default function ReportPage() {
                   { label: 'Critical',        val: criticalCount, color: criticalCount > 0 ? 'text-[#CC1A1A]' : 'text-[#00A651]' },
                 ].map(s => (
                   <div key={s.label} className="bg-[#F5F5F0] rounded-xl p-4 text-center">
-                    <p className={`text-3xl font-bold ${s.color}`} style={{ fontFamily: 'var(--font-display)' }}>
-                      {s.val}
-                    </p>
+                    <p className={`text-3xl font-bold ${s.color}`} style={{ fontFamily: 'var(--font-display)' }}>{s.val}</p>
                     <p className="text-gray-400 text-xs mt-1">{s.label}</p>
                   </div>
                 ))}
@@ -379,21 +358,15 @@ export default function ReportPage() {
         )}
 
         {/* FINDINGS */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>
-            Detailed Findings
-          </h2>
+        {/* ref on the header so we know when user has scrolled past it */}
+        <div ref={findingsTopRef} className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>Detailed Findings</h2>
           <div className="flex items-center gap-2">
             {(['all', 'vulnerable', 'passed'] as const).map(f => (
-              <button
-                key={f}
-                onClick={() => setActiveFilter(f)}
+              <button key={f} onClick={() => setActiveFilter(f)}
                 className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
-                  activeFilter === f
-                    ? 'bg-gray-900 text-white border-gray-900'
-                    : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
-                }`}
-              >
+                  activeFilter === f ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                }`}>
                 {f === 'all' ? `All (${results.length})` : f === 'vulnerable' ? `Vulnerable (${vulnCount})` : `Passed (${passCount})`}
               </button>
             ))}
@@ -407,10 +380,7 @@ export default function ReportPage() {
               <div key={r.id} className={`card border-l-4 ${r.vulnerable ? 'border-l-[#CC1A1A]' : 'border-l-[#00A651]'}`}>
                 <div className="flex items-start gap-4">
                   <div className="mt-0.5 shrink-0">
-                    {r.vulnerable
-                      ? <XCircle className="w-5 h-5 text-[#CC1A1A]" />
-                      : <CheckCircle className="w-5 h-5 text-[#00A651]" />
-                    }
+                    {r.vulnerable ? <XCircle className="w-5 h-5 text-[#CC1A1A]" /> : <CheckCircle className="w-5 h-5 text-[#00A651]" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -428,9 +398,7 @@ export default function ReportPage() {
                     </div>
                     <p className="text-gray-700 text-sm leading-relaxed mb-2">{r.reason}</p>
                     {r.citation && (
-                      <p className="text-[#CC1A1A] text-xs font-semibold mb-2">
-                        📋 {r.citation}
-                      </p>
+                      <p className="text-[#CC1A1A] text-xs font-semibold mb-2">📋 {r.citation}</p>
                     )}
                     <details className="group">
                       <summary className="text-xs text-gray-400 font-semibold cursor-pointer hover:text-gray-600 transition-colors select-none">
@@ -445,9 +413,7 @@ export default function ReportPage() {
                           <p className="text-xs text-gray-400 font-bold mb-1 uppercase tracking-wide">Model response</p>
                           <p className="text-xs text-gray-600 leading-relaxed">{r.response}</p>
                         </div>
-                        {r.engine && (
-                          <p className="text-xs text-gray-300">Analyzed by: {r.engine}</p>
-                        )}
+                        {r.engine && <p className="text-xs text-gray-300">Analyzed by: {r.engine}</p>}
                       </div>
                     </details>
                   </div>
@@ -456,6 +422,9 @@ export default function ReportPage() {
             )
           })}
         </div>
+
+        {/* Invisible anchor at bottom of findings list — scroll button targets this */}
+        <div ref={findingsBottomRef} />
 
         {/* REMEDIATION */}
         {vulnCount > 0 && (
@@ -491,18 +460,11 @@ export default function ReportPage() {
 
         {/* ACTIONS */}
         <div className="flex flex-wrap gap-3 mb-8 items-center">
-          <button
-            onClick={handleDownloadPdf}
-            disabled={pdfLoading}
-            className="btn-red flex items-center gap-2 text-sm py-2.5 px-5 disabled:opacity-60"
-          >
-            {pdfLoading
-              ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
-              : <><Download className="w-4 h-4" /> Download PDF report</>
-            }
+          <button onClick={handleDownloadPdf} disabled={pdfLoading}
+            className="btn-red flex items-center gap-2 text-sm py-2.5 px-5 disabled:opacity-60">
+            {pdfLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><Download className="w-4 h-4" /> Download PDF report</>}
           </button>
 
-          {/* CSV button — gated for non-Professional */}
           <div className="relative" ref={csvTooltipRef}>
             {isProfessional ? (
               <a href={`/api/audits/${audit.auditId}/csv`}>
@@ -511,10 +473,8 @@ export default function ReportPage() {
                 </button>
               </a>
             ) : (
-              <button
-                onClick={() => setShowCsvTooltip(v => !v)}
-                className="btn-outline text-sm py-2.5 px-5 flex items-center gap-2 opacity-60"
-              >
+              <button onClick={() => setShowCsvTooltip(v => !v)}
+                className="btn-outline text-sm py-2.5 px-5 flex items-center gap-2 opacity-60">
                 <Lock className="w-4 h-4" /> Export CSV
               </button>
             )}
@@ -544,7 +504,6 @@ export default function ReportPage() {
           </Link>
         </div>
 
-        {/* FOOTER STAMP */}
         <div className="p-4 border border-gray-200 rounded-xl bg-white text-center">
           <p className="text-gray-400 text-xs tracking-widest uppercase font-semibold">
             VermelhoAI · AI Security Report · {audit.auditId}

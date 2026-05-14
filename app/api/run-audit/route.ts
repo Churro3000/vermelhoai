@@ -20,7 +20,6 @@ export async function POST(req: NextRequest) {
 
     const sql = neon(process.env.DATABASE_URL!)
 
-    // Check subscription tier
     const subRows = await sql`
       SELECT plan, status, expires_at FROM subscriptions
       WHERE user_email = ${userEmail}
@@ -29,10 +28,8 @@ export async function POST(req: NextRequest) {
     `
     const userPlan = subRows[0]?.plan ?? 'free'
 
-    // Monthly test limits — professional is unlimited
     const testLimit = userPlan === 'professional' ? null : userPlan === 'starter' ? 50 : 10
 
-    // Count tests used in current billing period
     if (testLimit !== null) {
       const expiresAt = subRows[0]?.expires_at ? new Date(subRows[0].expires_at) : null
       const periodStart = expiresAt
@@ -67,23 +64,16 @@ export async function POST(req: NextRequest) {
     // TIMING MATH:  probe count  ×  delay  =  total function runtime
     //   Model: qwen/qwen3-32b on Groq free tier = 60 req/min = 1 req/sec minimum
     //
-    //   Free:         10  ×  1000ms  =  ~10s   fits Vercel free 60s limit   ✅ works now
-    //   Starter:     210  ×  1000ms  =  ~210s  fits Vercel Pro 300s limit   ✅ works on Vercel Pro
-    //   Professional:210  ×  1000ms  =  ~210s  fits Vercel Pro 300s limit   ✅ works on Vercel Pro
+    //   Free:         10  ×  1000ms  =  ~10s   fits Vercel free 60s   ✅ works now
+    //   Starter:     210  ×  1000ms  =  ~210s  fits Vercel Pro 300s   ✅ on Vercel Pro
+    //   Professional:210  ×  1000ms  =  ~210s  fits Vercel Pro 300s   ✅ on Vercel Pro
     //
-    // ACTION WHEN FIRST PAYING CUSTOMER SUBSCRIBES:
-    //   → Go to vercel.com/account/billing and upgrade to Pro ($20/mo)
-    //   → maxDuration=300 above kicks in automatically. Zero code changes needed.
-    //
-    // FUTURE: When Groq Developer paid tier reopens (console.groq.com > Billing):
-    //   → Add card, enable Developer plan (pay-per-token, nearly free at low volume)
-    //   → Change delay below from 1000 to 300
-    //   → Result: 210 × 300ms = 63s — fits Vercel Pro easily, audits take ~1 min
+    // ACTION: Buy Vercel Pro ($20) when first customer pays. maxDuration=300 kicks in automatically.
+    // FUTURE: When Groq paid reopens → change delay from 1000 to 300ms
     // ────────────────────────────────────────────────────────────────────────
     const probeLimit = userPlan === 'free' ? 10 : probes.length
     const activeProbes = probes.slice(0, probeLimit)
 
-    // Merge custom probes for Professional users
     let allProbes = [...activeProbes]
     if (userPlan === 'professional') {
       const customRows = await sql`
@@ -102,7 +92,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Step 1: Run all probes sequentially, collect raw responses
+    // Step 1: Send all probes to the target AI, collect raw responses
+    // If target returns HTTP 429 (rate limited), mark as skipped — prevents garbage analysis
     const rawResults = []
     for (const attack of allProbes) {
       try {
@@ -120,7 +111,13 @@ export async function POST(req: NextRequest) {
         })
 
         let responseText = `HTTP ${res.status}`
-        if (res.ok) {
+        let skipped = false
+
+        if (res.status === 429) {
+          // Target AI is rate limited — skip Groq analysis entirely
+          // Don't flag HTTP 429 responses as vulnerable, that's meaningless noise
+          skipped = true
+        } else if (res.ok) {
           try {
             const d = await res.json() as Record<string, unknown>
             const choices = d?.choices as Array<{ message?: { content?: string }, text?: string }> | undefined
@@ -133,18 +130,32 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        rawResults.push({ attack, responseText })
+        rawResults.push({ attack, responseText, skipped })
       } catch {
-        rawResults.push({ attack, responseText: 'Request timed out.' })
+        rawResults.push({ attack, responseText: 'Request timed out.', skipped: false })
       }
     }
 
-    // Step 2: Analyze each response with Groq (qwen/qwen3-32b, 60 req/min free tier)
-    // 1000ms delay = 1 req/sec = 60/min, safely within the 60 req/min free limit
-    // CHANGE TO 300 when Groq paid Developer tier reopens
+    // Step 2: Analyze with Groq (qwen/qwen3-32b, 60 req/min free tier)
+    // Skipped probes (429s) bypass Groq entirely and are marked as not vulnerable
+    // 1000ms delay keeps us safely within 60 req/min free limit
+    // CHANGE DELAY TO 300 when Groq paid Developer tier reopens
     const results = []
-    for (const { attack, responseText } of rawResults) {
-      const analysis = await analyzeWithGroq(attack.prompt, responseText, attack.category)
+    for (const { attack, responseText, skipped } of rawResults) {
+      let analysis: { vulnerable: boolean; reason: string; citation: string; severity: 'Critical' | 'High' | 'Medium' | 'Low' }
+
+      if (skipped) {
+        analysis = {
+          vulnerable: false,
+          reason: 'Target API was rate limited during this probe — result skipped.',
+          citation: '',
+          severity: 'Low',
+        }
+      } else {
+        analysis = await analyzeWithGroq(attack.prompt, responseText, attack.category)
+        await new Promise(resolve => setTimeout(resolve, 1000)) // CHANGE TO 300 when Groq paid opens
+      }
+
       results.push({
         id: attack.id,
         category: attack.category,
@@ -157,7 +168,6 @@ export async function POST(req: NextRequest) {
         hintSeverity: attack.severity,
         engine: 'VermelhoAI',
       })
-      await new Promise(resolve => setTimeout(resolve, 1000)) // CHANGE TO 300 when Groq paid opens
     }
 
     const vulnCount = results.filter(r => r.vulnerable).length
@@ -170,7 +180,6 @@ export async function POST(req: NextRequest) {
       VALUES (${auditId}, ${userEmail}, ${endpointUrl}, ${riskScore}, ${riskLevel}, ${results.length}, ${vulnCount}, ${JSON.stringify(results)})
     `
 
-    // Send audit complete email
     try {
       const { resend } = await import('@/lib/emails/resend')
       const { AuditCompleteEmail } = await import('@/lib/emails/auditComplete')
