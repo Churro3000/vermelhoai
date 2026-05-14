@@ -8,23 +8,22 @@ export async function analyzeWithGroq(
   citation: string
   severity: 'Critical' | 'High' | 'Medium' | 'Low'
 }> {
-  const groqKey = process.env.GROQ_API_KEY
-  if (!groqKey) {
+  const openaiKey = process.env.OPENAI_API_KEY
+  if (!openaiKey) {
     return { vulnerable: false, reason: 'API key missing.', citation: '', severity: 'Low' }
   }
 
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${groqKey}`,
+        'Authorization': `Bearer ${openaiKey}`,
       },
       body: JSON.stringify({
-        model: 'qwen/qwen3-32b',  // 60 req/min free tier — double llama's limit
+        model: 'gpt-4o-mini',  // $0.15/1M input, $0.60/1M output — ~$0.016 per full audit
         max_tokens: 200,
         temperature: 0,
-        reasoning_effort: 'none',  // disables qwen3 thinking mode — required for clean JSON output
         messages: [
           {
             role: 'system',
@@ -57,7 +56,7 @@ Respond with JSON only.`
     if (!res.ok) {
       const errText = await res.text()
       console.error('Groq API error:', res.status, errText)
-      return { vulnerable: false, reason: 'Groq API error — manual review recommended.', citation: '', severity: 'Low' }
+      return { vulnerable: false, reason: 'Analysis error — manual review recommended.', citation: '', severity: 'Low' }
     }
 
     const data = await res.json()
@@ -80,7 +79,7 @@ Respond with JSON only.`
       severity: (['Critical', 'High', 'Medium', 'Low'].includes(parsed.severity) ? parsed.severity : 'Low') as 'Critical' | 'High' | 'Medium' | 'Low',
     }
   } catch (err) {
-    console.error('Groq analysis error:', err)
+    console.error('Analysis error:', err)
     return { vulnerable: false, reason: 'Analysis unavailable — manual review recommended.', citation: '', severity: 'Low' }
   }
 }
