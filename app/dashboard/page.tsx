@@ -2,7 +2,7 @@
 import { Suspense, useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, ChevronDown, X, CheckCircle, Clock, Loader2, Target, Zap, Upload, Trash2, Shield } from 'lucide-react'
+import { Plus, ChevronDown, X, CheckCircle, Clock, Loader2, Target, Zap, Upload, Trash2 } from 'lucide-react'
 
 interface Audit {
   audit_id: string
@@ -54,15 +54,15 @@ function ShieldLogo({ size = 27, textColor = 'text-gray-900' }: { size?: number;
   )
 }
 
-// ── Full-screen audit loading overlay ──
+// ── Circular audit loading overlay ──
 function AuditLoadingOverlay({ probeCount }: { probeCount: number }) {
   const [progress, setProgress] = useState(0)
   const [statusText, setStatusText] = useState('Initialising attack engine...')
   const rafRef = useRef<number>()
   const startRef = useRef<number>(0)
 
-  // Estimated duration: probeCount × 500ms delay + ~2s overhead, capped for display
-  const estimatedMs = probeCount * 500 + 2000
+  // probeCount × 1000ms delay + overhead
+  const estimatedMs = probeCount * 1000 + 3000
 
   const statusMessages = [
     { at: 0,  text: 'Initialising attack engine...' },
@@ -71,7 +71,7 @@ function AuditLoadingOverlay({ probeCount }: { probeCount: number }) {
     { at: 35, text: 'Testing prompt injection vectors...' },
     { at: 50, text: 'Probing system prompt extraction...' },
     { at: 65, text: 'Running OWASP LLM Top 10 checks...' },
-    { at: 78, text: 'Analysing responses with AI...' },
+    { at: 78, text: 'Analysing AI responses...' },
     { at: 88, text: 'Calculating risk score...' },
     { at: 94, text: 'Finalising report...' },
   ]
@@ -82,16 +82,12 @@ function AuditLoadingOverlay({ probeCount }: { probeCount: number }) {
 
     function tick(now: number) {
       const elapsed = now - startRef.current
-      // Grow quickly to 90%, then crawl — never reaches 100 until done
       const raw = elapsed / estimatedMs
-      const p = Math.min(raw * 90, 90) + (raw > 1 ? Math.min((raw - 1) * 5, 8) : 0)
+      const p = Math.min(raw * 90, 90) + (raw > 1 ? Math.min((raw - 1) * 5, 7) : 0)
       const capped = Math.min(p, 97)
       setProgress(capped)
-
-      // Update status text based on progress
       const msg = [...statusMessages].reverse().find(m => capped >= m.at)
       if (msg) setStatusText(msg.text)
-
       rafRef.current = requestAnimationFrame(tick)
     }
     rafRef.current = requestAnimationFrame(tick)
@@ -99,75 +95,78 @@ function AuditLoadingOverlay({ probeCount }: { probeCount: number }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // SVG circle math
+  const size = 160
+  const strokeWidth = 8
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const strokeDashoffset = circumference - (progress / 100) * circumference
+
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#0D0D0B]/95 backdrop-blur-sm px-6">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-6">
+      <div className="bg-white rounded-2xl shadow-2xl px-10 py-10 flex flex-col items-center w-full max-w-sm">
 
-      {/* Top progress bar */}
-      <div className="fixed top-0 left-0 right-0 h-0.5 bg-white/10">
-        <div
-          className="h-full bg-[#CC1A1A] transition-all duration-500 ease-out"
-          style={{
-            width: `${progress}%`,
-            boxShadow: '0 0 12px rgba(204,26,26,0.9), 0 0 4px rgba(204,26,26,0.6)',
-          }}
-        />
-      </div>
-
-      {/* Center card */}
-      <div className="w-full max-w-md text-center">
-
-        {/* Animated shield icon */}
-        <div className="flex justify-center mb-8">
-          <div className="relative">
-            <div className="w-20 h-20 rounded-2xl bg-[#CC1A1A]/10 border border-[#CC1A1A]/20 flex items-center justify-center">
-              <Shield className="w-10 h-10 text-[#CC1A1A]" style={{ animation: 'pulse 2s ease-in-out infinite' }} />
-            </div>
-            {/* Spinning ring */}
-            <div
-              className="absolute inset-0 rounded-2xl border-2 border-transparent border-t-[#CC1A1A]"
-              style={{ animation: 'spin 1.5s linear infinite' }}
+        {/* Circular progress */}
+        <div className="relative mb-6" style={{ width: size, height: size }}>
+          <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+            {/* Track */}
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="none"
+              stroke="#F0EFEA"
+              strokeWidth={strokeWidth}
             />
+            {/* Progress stroke */}
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={radius}
+              fill="none"
+              stroke="#CC1A1A"
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              style={{ transition: 'stroke-dashoffset 0.5s ease-out' }}
+            />
+          </svg>
+          {/* Percentage text in centre */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span
+              className="text-4xl font-bold text-gray-900"
+              style={{ fontFamily: 'var(--font-display)', lineHeight: 1 }}
+            >
+              {Math.round(progress)}
+            </span>
+            <span className="text-xs text-gray-400 mt-1">%</span>
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+        {/* Title */}
+        <h2
+          className="text-xl font-bold text-gray-900 mb-1 text-center"
+          style={{ fontFamily: 'var(--font-display)' }}
+        >
           Audit in progress
         </h2>
-        <p className="text-gray-400 text-sm mb-8 leading-relaxed">
-          Running {probeCount} adversarial probes against your AI endpoint.
-          <br />Each probe is tested and analysed individually.
+
+        {/* Probe count line */}
+        <p className="text-gray-400 text-sm text-center mb-1">
+          Running {probeCount}+ adversarial probes
         </p>
 
-        {/* Progress bar */}
-        <div className="w-full bg-white/10 rounded-full h-2 mb-3 overflow-hidden">
-          <div
-            className="h-full bg-[#CC1A1A] rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        {/* Status text */}
+        <p className="text-gray-400 text-xs text-center mb-6" style={{ minHeight: '1rem' }}>
+          {statusText}
+        </p>
 
-        <div className="flex items-center justify-between text-xs mb-8">
-          <span className="text-gray-500 font-medium">{statusText}</span>
-          <span className="text-gray-500 font-mono">{Math.round(progress)}%</span>
-        </div>
-
-        {/* Do not close warning */}
-        <div className="flex items-center justify-center gap-2.5 bg-[#CC1A1A]/10 border border-[#CC1A1A]/25 rounded-xl px-5 py-3.5">
-          <div className="w-2 h-2 rounded-full bg-[#CC1A1A] shrink-0" style={{ animation: 'pulse 1.5s ease-in-out infinite' }} />
-          <p className="text-[#FF6B6B] text-sm font-semibold">
-            Do not close or refresh this tab
-          </p>
-        </div>
-
-        <p className="text-gray-600 text-xs mt-4">
-          A report link will also be sent to your email when complete.
+        {/* Do not close — simple red text, no box */}
+        <p className="text-[#CC1A1A] text-sm font-semibold text-center">
+          Do not close or refresh this tab
         </p>
       </div>
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-      `}</style>
     </div>
   )
 }
@@ -196,7 +195,6 @@ function DashboardContent() {
   const searchParams = useSearchParams()
   const paymentStatus = searchParams.get('payment')
 
-  // Probe count for loading overlay estimate
   const probeCount = userPlan === 'free' ? 10 : 210
 
   useEffect(() => {
@@ -250,7 +248,7 @@ function DashboardContent() {
     e.preventDefault()
     setIsRunning(true)
     setAuditError('')
-    setShowNewAudit(false) // Close modal, show loading overlay
+    setShowNewAudit(false)
     try {
       const res = await fetch('/api/run-audit', {
         method: 'POST',
@@ -261,7 +259,7 @@ function DashboardContent() {
       if (!res.ok) {
         setAuditError(data.error || 'Audit failed.')
         setIsRunning(false)
-        setShowNewAudit(true) // Re-open modal to show error
+        setShowNewAudit(true)
         return
       }
       setIsRunning(false)
@@ -269,7 +267,7 @@ function DashboardContent() {
     } catch {
       setAuditError('Could not connect to audit engine. Please try again.')
       setIsRunning(false)
-      setShowNewAudit(true) // Re-open modal to show error
+      setShowNewAudit(true)
     }
   }
 
@@ -279,38 +277,27 @@ function DashboardContent() {
     setUploadError('')
     setUploadSuccess('')
     setUploadLoading(true)
-
     try {
       const text = await file.text()
       let parsed: unknown
-      try {
-        parsed = JSON.parse(text)
-      } catch {
+      try { parsed = JSON.parse(text) } catch {
         setUploadError('Invalid JSON file. Please check the format.')
         setUploadLoading(false)
         return
       }
-
       const probesArray = Array.isArray(parsed) ? parsed : (parsed as Record<string, unknown>)?.probes
-
       if (!Array.isArray(probesArray)) {
         setUploadError('File must contain a "probes" array or be an array of probes.')
         setUploadLoading(false)
         return
       }
-
       const res = await fetch('/api/custom-probes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ probes: probesArray }),
       })
       const data = await res.json()
-      if (!res.ok) {
-        setUploadError(data.error || 'Upload failed.')
-        setUploadLoading(false)
-        return
-      }
-
+      if (!res.ok) { setUploadError(data.error || 'Upload failed.'); setUploadLoading(false); return }
       setUploadSuccess(`${data.count} custom probe${data.count === 1 ? '' : 's'} uploaded successfully.`)
       const refreshed = await fetch('/api/custom-probes').then(r => r.json())
       setCustomProbes(refreshed.probes ?? [])
@@ -345,20 +332,14 @@ function DashboardContent() {
   return (
     <div className="min-h-screen bg-[#F5F5F0] flex flex-col">
 
-      {/* Full-screen audit loading overlay */}
       {isRunning && <AuditLoadingOverlay probeCount={probeCount} />}
 
       {/* NAV */}
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-[1280px] mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/">
-            <ShieldLogo size={28} textColor="text-gray-900" />
-          </Link>
+          <Link href="/"><ShieldLogo size={28} textColor="text-gray-900" /></Link>
           <div className="relative">
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors"
-            >
+            <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center gap-2 text-gray-700 hover:text-gray-900 transition-colors">
               <div className="w-8 h-8 rounded-full bg-[#FEF2F2] border border-[#CC1A1A]/20 flex items-center justify-center text-[#CC1A1A] font-bold text-sm">
                 {user.name[0]?.toUpperCase()}
               </div>
@@ -371,14 +352,9 @@ function DashboardContent() {
                   <p className="text-xs text-gray-400 truncate">{user.email}</p>
                 </div>
                 <Link href="/dashboard/settings">
-                  <button className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors">
-                    Settings
-                  </button>
+                  <button className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors">Settings</button>
                 </Link>
-                <button
-                  onClick={handleSignOut}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
-                >
+                <button onClick={handleSignOut} className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors">
                   Sign out
                 </button>
               </div>
@@ -393,25 +369,19 @@ function DashboardContent() {
         {paymentStatus === 'success' && (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex items-center gap-3">
             <CheckCircle className="w-5 h-5 text-[#00A651] shrink-0" />
-            <p className="text-green-700 text-sm font-semibold">
-              Payment successful — your plan is now active. Welcome to VermelhoAI!
-            </p>
+            <p className="text-green-700 text-sm font-semibold">Payment successful — your plan is now active. Welcome to VermelhoAI!</p>
           </div>
         )}
         {paymentStatus === 'cancelled' && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6 flex items-center gap-3">
             <Clock className="w-5 h-5 text-yellow-600 shrink-0" />
-            <p className="text-yellow-700 text-sm font-semibold">
-              Payment cancelled — no charge was made. Upgrade anytime to unlock full access.
-            </p>
+            <p className="text-yellow-700 text-sm font-semibold">Payment cancelled — no charge was made. Upgrade anytime to unlock full access.</p>
           </div>
         )}
         {paymentStatus === 'failed' && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3">
             <X className="w-5 h-5 text-[#CC1A1A] shrink-0" />
-            <p className="text-red-700 text-sm font-semibold">
-              Payment failed — please try again or contact support.
-            </p>
+            <p className="text-red-700 text-sm font-semibold">Payment failed — please try again or contact support.</p>
           </div>
         )}
 
@@ -420,12 +390,8 @@ function DashboardContent() {
           <div className="card border-[#CC1A1A]/30 bg-[#FEF2F2]/50 mb-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <p className="font-bold text-gray-900 text-sm" style={{ fontFamily: 'var(--font-display)' }}>
-                  You're on the free trial
-                </p>
-                <p className="text-gray-500 text-sm mt-0.5">
-                  Upgrade to run more tests with the full 200+ probe library.
-                </p>
+                <p className="font-bold text-gray-900 text-sm" style={{ fontFamily: 'var(--font-display)' }}>You're on the free trial</p>
+                <p className="text-gray-500 text-sm mt-0.5">Upgrade to run more tests with the full 200+ probe library.</p>
               </div>
               <Link href="/dashboard/upgrade" className="shrink-0">
                 <button className="btn-red text-sm py-2 px-5 whitespace-nowrap flex items-center gap-2">
@@ -436,7 +402,7 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* PLAN STATUS + USAGE BAR */}
+        {/* PLAN STATUS */}
         {userPlan !== 'free' && (
           <div className="card border-[#00A651]/30 bg-[#F0FDF4]/50 mb-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -452,10 +418,8 @@ function DashboardContent() {
                     {testsUsed}/{testLimit} tests used this month
                   </span>
                   <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${isAtLimit ? 'bg-[#CC1A1A]' : usagePercent >= 80 ? 'bg-yellow-500' : 'bg-[#00A651]'}`}
-                      style={{ width: `${usagePercent}%` }}
-                    />
+                    <div className={`h-full rounded-full transition-all ${isAtLimit ? 'bg-[#CC1A1A]' : usagePercent >= 80 ? 'bg-yellow-500' : 'bg-[#00A651]'}`}
+                      style={{ width: `${usagePercent}%` }} />
                   </div>
                 </div>
               )}
@@ -465,9 +429,7 @@ function DashboardContent() {
             </div>
             {isAtLimit && userPlan === 'starter' && (
               <div className="mt-3 pt-3 border-t border-green-200 flex items-center justify-between gap-4">
-                <p className="text-[#CC1A1A] text-xs font-semibold">
-                  Monthly limit reached. Resets on your next renewal date.
-                </p>
+                <p className="text-[#CC1A1A] text-xs font-semibold">Monthly limit reached. Resets on your next renewal date.</p>
                 <Link href="/dashboard/upgrade">
                   <button className="btn-red text-xs py-1.5 px-3 flex items-center gap-1.5">
                     <Zap className="w-3 h-3" /> Upgrade
@@ -483,14 +445,10 @@ function DashboardContent() {
           <div className="card mb-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <span className="text-gray-700 text-sm font-semibold">
-                  Free trial: {testsUsed}/{testLimit} tests used this month
-                </span>
+                <span className="text-gray-700 text-sm font-semibold">Free trial: {testsUsed}/{testLimit} tests used this month</span>
                 <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${isAtLimit ? 'bg-[#CC1A1A]' : 'bg-gray-400'}`}
-                    style={{ width: `${usagePercent}%` }}
-                  />
+                  <div className={`h-full rounded-full transition-all ${isAtLimit ? 'bg-[#CC1A1A]' : 'bg-gray-400'}`}
+                    style={{ width: `${usagePercent}%` }} />
                 </div>
               </div>
               {isAtLimit && (
@@ -515,10 +473,7 @@ function DashboardContent() {
             </div>
             <div className="flex items-center gap-2">
               {userPlan === 'professional' && (
-                <button
-                  onClick={() => setShowCustomProbes(true)}
-                  className="btn-outline text-sm py-2 px-4 flex items-center gap-2"
-                >
+                <button onClick={() => setShowCustomProbes(true)} className="btn-outline text-sm py-2 px-4 flex items-center gap-2">
                   <Upload className="w-3.5 h-3.5" /> Custom probes
                   {customProbes.length > 0 && (
                     <span className="badge badge-gray text-xs py-0 px-1.5">{customProbes.length}</span>
@@ -536,13 +491,11 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* STATS ROW */}
+        {/* STATS */}
         {audits.length > 0 && (
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="card text-center">
-              <p className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>
-                {audits.length}
-              </p>
+              <p className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>{audits.length}</p>
               <p className="text-sm text-gray-500 mt-1">Total audits</p>
             </div>
             <div className="card text-center">
@@ -561,9 +514,7 @@ function DashboardContent() {
         )}
 
         {/* AUDITS TABLE */}
-        <h2 className="text-lg font-bold text-gray-900 mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-          Audit history
-        </h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-4" style={{ fontFamily: 'var(--font-display)' }}>Audit history</h2>
         <div className="card p-0 overflow-hidden">
           {auditsLoading ? (
             <div className="flex items-center justify-center py-16">
@@ -574,15 +525,10 @@ function DashboardContent() {
               <div className="w-14 h-14 bg-[#FEF2F2] rounded-full flex items-center justify-center mb-4">
                 <Target className="w-7 h-7 text-[#CC1A1A]" />
               </div>
-              <p className="text-gray-900 font-bold mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-                No audits yet
-              </p>
+              <p className="text-gray-900 font-bold mb-1" style={{ fontFamily: 'var(--font-display)' }}>No audits yet</p>
               <p className="text-gray-400 text-sm mb-4">Run your first test to see results here.</p>
-              <button
-                onClick={() => setShowNewAudit(true)}
-                disabled={isAtLimit}
-                className="btn-red text-sm py-2 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+              <button onClick={() => setShowNewAudit(true)} disabled={isAtLimit}
+                className="btn-red text-sm py-2 px-6 disabled:opacity-50 disabled:cursor-not-allowed">
                 Run your first test
               </button>
             </div>
@@ -600,34 +546,22 @@ function DashboardContent() {
               </thead>
               <tbody>
                 {audits.map((a, i) => (
-                  <tr
-                    key={a.audit_id}
-                    className={`hover:bg-gray-50 transition-colors ${i < audits.length - 1 ? 'border-b border-gray-100' : ''}`}
-                  >
+                  <tr key={a.audit_id} className={`hover:bg-gray-50 transition-colors ${i < audits.length - 1 ? 'border-b border-gray-100' : ''}`}>
                     <td className="px-6 py-4 text-gray-600 font-medium">
                       {new Date(a.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </td>
-                    <td className="px-6 py-4 text-gray-400 text-xs hidden md:table-cell max-w-[200px] truncate">
-                      {a.endpoint_url}
-                    </td>
+                    <td className="px-6 py-4 text-gray-400 text-xs hidden md:table-cell max-w-[200px] truncate">{a.endpoint_url}</td>
                     <td className="px-6 py-4">
-                      <span className="font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>
-                        {a.risk_score}
-                      </span>
+                      <span className="font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>{a.risk_score}</span>
                       <span className="text-gray-400 text-xs">/100</span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={riskBadge(a.risk_level)}>{a.risk_level}</span>
-                    </td>
+                    <td className="px-6 py-4"><span className={riskBadge(a.risk_level)}>{a.risk_level}</span></td>
                     <td className="px-6 py-4 text-gray-600 font-medium">
-                      {a.vulnerabilities_found}
-                      <span className="text-gray-400 text-xs"> / {a.total_probes}</span>
+                      {a.vulnerabilities_found}<span className="text-gray-400 text-xs"> / {a.total_probes}</span>
                     </td>
                     <td className="px-6 py-4">
                       <Link href={`/dashboard/report/${a.audit_id}`}>
-                        <button className="text-[#CC1A1A] hover:underline text-xs font-semibold">
-                          View
-                        </button>
+                        <button className="text-[#CC1A1A] hover:underline text-xs font-semibold">View</button>
                       </Link>
                     </td>
                   </tr>
@@ -642,81 +576,51 @@ function DashboardContent() {
       {showNewAudit && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4">
           <div className="card max-w-lg w-full relative">
-            <button
-              onClick={() => { setShowNewAudit(false); setAuditError('') }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
-            >
+            <button onClick={() => { setShowNewAudit(false); setAuditError('') }} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700">
               <X className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-3 mb-1">
               <div className="w-9 h-9 bg-[#FEF2F2] rounded-lg flex items-center justify-center">
                 <Target className="w-5 h-5 text-[#CC1A1A]" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>
-                New audit
-              </h2>
+              <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>New audit</h2>
             </div>
             <p className="text-gray-500 text-sm mb-6 ml-12">
               Enter your AI endpoint. {userPlan === 'professional' && customProbes.length > 0
                 ? `200+ built-in probes + ${customProbes.length} custom probe${customProbes.length === 1 ? '' : 's'} will run.`
                 : '200+ adversarial probes will run against it.'}
             </p>
-
             {testLimit !== null && (
               <div className="mb-4 px-3 py-2 bg-[#F8F8F5] rounded-lg border border-gray-200 flex items-center justify-between">
-                <span className="text-xs text-gray-500 font-medium">
-                  {testsUsed}/{testLimit} tests used this month
-                </span>
-                <span className={`text-xs font-semibold ${testsRemaining === 1 ? 'text-[#CC1A1A]' : 'text-gray-500'}`}>
-                  {testsRemaining} remaining
-                </span>
+                <span className="text-xs text-gray-500 font-medium">{testsUsed}/{testLimit} tests used this month</span>
+                <span className={`text-xs font-semibold ${testsRemaining === 1 ? 'text-[#CC1A1A]' : 'text-gray-500'}`}>{testsRemaining} remaining</span>
               </div>
             )}
-
             <form onSubmit={handleSubmitAudit} className="space-y-4">
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-1.5 block">AI endpoint URL</label>
-                <input
-                  required
-                  type="url"
-                  placeholder="https://your-ai.com/api/chat"
+                <input required type="url" placeholder="https://your-ai.com/api/chat"
                   className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-[#CC1A1A] transition-colors"
-                  value={auditForm.url}
-                  onChange={e => setAuditForm({ ...auditForm, url: e.target.value })}
-                />
+                  value={auditForm.url} onChange={e => setAuditForm({ ...auditForm, url: e.target.value })} />
               </div>
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-1.5 block">API key</label>
-                <input
-                  required
-                  type="password"
-                  placeholder="Your API key"
+                <input required type="password" placeholder="Your API key"
                   className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-[#CC1A1A] transition-colors"
-                  value={auditForm.apiKey}
-                  onChange={e => setAuditForm({ ...auditForm, apiKey: e.target.value })}
-                />
+                  value={auditForm.apiKey} onChange={e => setAuditForm({ ...auditForm, apiKey: e.target.value })} />
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <Clock className="w-3 h-3 text-gray-400" />
                   <p className="text-gray-400 text-xs">Keys are never stored — used only during the test.</p>
                 </div>
               </div>
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
-                  Notes <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
-                <textarea
-                  placeholder="e.g. Customer support chatbot v2"
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Notes <span className="text-gray-400 font-normal">(optional)</span></label>
+                <textarea placeholder="e.g. Customer support chatbot v2"
                   className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:border-[#CC1A1A] transition-colors resize-none h-20"
-                  value={auditForm.notes}
-                  onChange={e => setAuditForm({ ...auditForm, notes: e.target.value })}
-                />
+                  value={auditForm.notes} onChange={e => setAuditForm({ ...auditForm, notes: e.target.value })} />
               </div>
               {auditError && <p className="text-[#CC1A1A] text-sm font-semibold">{auditError}</p>}
-              <button
-                type="submit"
-                disabled={isRunning}
-                className="btn-red w-full justify-center py-3.5 disabled:opacity-60"
-              >
+              <button type="submit" disabled={isRunning} className="btn-red w-full justify-center py-3.5 disabled:opacity-60">
                 <CheckCircle className="w-4 h-4" /> Launch audit
               </button>
             </form>
@@ -724,29 +628,20 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* CUSTOM PROBES MODAL — Professional only */}
+      {/* CUSTOM PROBES MODAL */}
       {showCustomProbes && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4">
           <div className="card max-w-lg w-full relative max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => { setShowCustomProbes(false); setUploadError(''); setUploadSuccess('') }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
-            >
+            <button onClick={() => { setShowCustomProbes(false); setUploadError(''); setUploadSuccess('') }} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700">
               <X className="w-5 h-5" />
             </button>
-
             <div className="flex items-center gap-3 mb-1">
               <div className="w-9 h-9 bg-[#FEF2F2] rounded-lg flex items-center justify-center">
                 <Upload className="w-5 h-5 text-[#CC1A1A]" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>
-                Custom probes
-              </h2>
+              <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>Custom probes</h2>
             </div>
-            <p className="text-gray-500 text-sm mb-6 ml-12">
-              Upload your own probes to run alongside the built-in 200+ library. Max 50 probes per upload.
-            </p>
-
+            <p className="text-gray-500 text-sm mb-6 ml-12">Upload your own probes to run alongside the built-in 200+ library. Max 50 probes per upload.</p>
             <div className="bg-[#F8F8F5] rounded-lg border border-gray-200 p-4 mb-5">
               <p className="text-xs font-semibold text-gray-700 mb-2">Expected JSON format:</p>
               <pre className="text-xs text-gray-500 overflow-x-auto leading-relaxed">{`{
@@ -761,48 +656,24 @@ function DashboardContent() {
 }`}</pre>
               <p className="text-xs text-gray-400 mt-2">Severity options: Critical, High, Medium, Low</p>
             </div>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadLoading}
-              className="btn-outline w-full justify-center py-2.5 text-sm mb-4 disabled:opacity-60"
-            >
-              {uploadLoading
-                ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
-                : <><Upload className="w-4 h-4" /> Select JSON file</>
-              }
+            <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileUpload} className="hidden" />
+            <button onClick={() => fileInputRef.current?.click()} disabled={uploadLoading}
+              className="btn-outline w-full justify-center py-2.5 text-sm mb-4 disabled:opacity-60">
+              {uploadLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</> : <><Upload className="w-4 h-4" /> Select JSON file</>}
             </button>
-
-            {uploadError && (
-              <p className="text-[#CC1A1A] text-sm font-semibold mb-4">{uploadError}</p>
-            )}
+            {uploadError && <p className="text-[#CC1A1A] text-sm font-semibold mb-4">{uploadError}</p>}
             {uploadSuccess && (
               <div className="flex items-center gap-2 text-[#00A651] text-sm font-semibold mb-4">
                 <CheckCircle className="w-4 h-4" /> {uploadSuccess}
               </div>
             )}
-
             {customProbesLoading ? (
-              <div className="flex justify-center py-6">
-                <Loader2 className="w-5 h-5 text-[#CC1A1A] animate-spin" />
-              </div>
+              <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 text-[#CC1A1A] animate-spin" /></div>
             ) : customProbes.length > 0 ? (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-semibold text-gray-700">
-                    {customProbes.length} custom probe{customProbes.length === 1 ? '' : 's'} active
-                  </p>
-                  <button
-                    onClick={handleDeleteCustomProbes}
-                    className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#CC1A1A] transition-colors font-medium"
-                  >
+                  <p className="text-sm font-semibold text-gray-700">{customProbes.length} custom probe{customProbes.length === 1 ? '' : 's'} active</p>
+                  <button onClick={handleDeleteCustomProbes} className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#CC1A1A] transition-colors font-medium">
                     <Trash2 className="w-3.5 h-3.5" /> Delete all
                   </button>
                 </div>
@@ -829,11 +700,7 @@ function DashboardContent() {
 
 export default function Dashboard() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#CC1A1A] animate-spin" />
-      </div>
-    }>
+    <Suspense fallback={<div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center"><Loader2 className="w-8 h-8 text-[#CC1A1A] animate-spin" /></div>}>
       <DashboardContent />
     </Suspense>
   )

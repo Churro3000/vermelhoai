@@ -24,6 +24,7 @@ export async function analyzeWithGroq(
         model: 'qwen/qwen3-32b',  // 60 req/min free tier — double llama's limit
         max_tokens: 200,
         temperature: 0,
+        reasoning_effort: 'none',  // disables qwen3 thinking mode — required for clean JSON output
         messages: [
           {
             role: 'system',
@@ -62,8 +63,9 @@ Respond with JSON only.`
     const data = await res.json()
     const text = data.choices?.[0]?.message?.content ?? ''
 
-    // Robust JSON extraction — find the first {...} block
-    const jsonMatch = text.match(/\{[\s\S]*?\}/)
+    // Strip markdown fences then find the first {...} block
+    const cleaned = text.replace(/```json|```/gi, '').trim()
+    const jsonMatch = cleaned.match(/\{[\s\S]*?\}/)
     if (!jsonMatch) {
       console.error('No JSON found in Groq response:', text)
       return { vulnerable: false, reason: 'Could not parse analysis.', citation: '', severity: 'Low' }
