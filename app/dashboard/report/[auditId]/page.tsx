@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Download, ArrowLeft, AlertTriangle, CheckCircle, XCircle, Loader2, Target, Lock, ChevronDown } from 'lucide-react'
+import { Download, ArrowLeft, AlertTriangle, CheckCircle, XCircle, Loader2, Target, Lock, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface AttackResult {
   id: string
@@ -129,6 +129,7 @@ export default function ReportPage() {
   const [userPlan, setUserPlan] = useState<string>('free')
   const [showCsvTooltip, setShowCsvTooltip] = useState(false)
   const [showScrollBtn, setShowScrollBtn] = useState(false)
+  const [atBottom, setAtBottom] = useState(false)
   const csvTooltipRef = useRef<HTMLDivElement>(null)
   const findingsTopRef = useRef<HTMLDivElement>(null)
   const findingsBottomRef = useRef<HTMLDivElement>(null)
@@ -159,8 +160,10 @@ export default function ReportPage() {
       if (!findingsTopRef.current || !findingsBottomRef.current) return
       const topRect = findingsTopRef.current.getBoundingClientRect()
       const bottomRect = findingsBottomRef.current.getBoundingClientRect()
-      // Show when findings header is above viewport AND bottom of findings is still below viewport
-      setShowScrollBtn(topRect.bottom < 0 && bottomRect.top > window.innerHeight)
+      const pastTop = topRect.bottom < 0
+      const pastBottom = bottomRect.top <= window.innerHeight
+      setShowScrollBtn(pastTop)
+      setAtBottom(pastTop && pastBottom)
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
@@ -201,7 +204,11 @@ export default function ReportPage() {
   }
 
   const scrollToBottomOfFindings = () => {
-    findingsBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (atBottom) {
+      findingsTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } else {
+      findingsBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   if (loading) return (
@@ -249,7 +256,7 @@ export default function ReportPage() {
           className="fixed right-6 bottom-8 z-50 w-10 h-10 rounded-full bg-white shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 hover:shadow-xl transition-all duration-200"
           aria-label="Jump to end of findings"
         >
-          <ChevronDown className="w-5 h-5 text-gray-500" />
+          {atBottom ? <ChevronUp className="w-5 h-5 text-gray-500" /> : <ChevronDown className="w-5 h-5 text-gray-500" />}
         </button>
       )}
 

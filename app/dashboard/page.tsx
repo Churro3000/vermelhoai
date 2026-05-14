@@ -108,36 +108,21 @@ function AuditLoadingOverlay({ probeCount }: { probeCount: number }) {
 
         {/* Circular progress */}
         <div className="relative mb-6" style={{ width: size, height: size }}>
-          <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+          <svg width={size} height={size}>
             {/* Track */}
-            <circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              fill="none"
-              stroke="#F0EFEA"
-              strokeWidth={strokeWidth}
-            />
-            {/* Progress stroke */}
-            <circle
-              cx={size / 2}
-              cy={size / 2}
-              r={radius}
-              fill="none"
-              stroke="#CC1A1A"
-              strokeWidth={strokeWidth}
+            <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#F0EFEA" strokeWidth={strokeWidth} />
+            {/* Light red fill showing progress */}
+            <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#FECACA" strokeWidth={strokeWidth}
+              strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
+              style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dashoffset 0.6s ease-out' }} />
+            {/* Spinning red arc on top */}
+            <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#CC1A1A" strokeWidth={strokeWidth}
               strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              style={{ transition: 'stroke-dashoffset 0.5s ease-out' }}
-            />
+              strokeDasharray={`${circumference * 0.22} ${circumference * 0.78}`}
+              style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', animation: 'spin-arc 1.2s linear infinite' }} />
           </svg>
-          {/* Percentage text in centre */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span
-              className="text-4xl font-bold text-gray-900"
-              style={{ fontFamily: 'var(--font-display)', lineHeight: 1 }}
-            >
+            <span className="text-4xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)', lineHeight: 1 }}>
               {Math.round(progress)}
             </span>
             <span className="text-xs text-gray-400 mt-1">%</span>
@@ -167,6 +152,13 @@ function AuditLoadingOverlay({ probeCount }: { probeCount: number }) {
           Do not close or refresh this tab
         </p>
       </div>
+
+      <style>{`
+        @keyframes spin-arc {
+          from { transform: rotate(-90deg); }
+          to   { transform: rotate(270deg); }
+        }
+      `}</style>
     </div>
   )
 }
