@@ -110,14 +110,23 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// DELETE — clear all custom probes
+// DELETE — clear all probes, or a single probe if ?probe_id= is provided
 export async function DELETE(req: NextRequest) {
   const userEmail = getUserEmail(req)
   if (!userEmail) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
     const sql = neon(process.env.DATABASE_URL!)
-    await sql`DELETE FROM custom_probes WHERE user_email = ${userEmail}`
+    const probeId = req.nextUrl.searchParams.get('probe_id')
+
+    if (probeId) {
+      // Delete single probe
+      await sql`DELETE FROM custom_probes WHERE user_email = ${userEmail} AND probe_id = ${probeId}`
+    } else {
+      // Delete all probes for this user
+      await sql`DELETE FROM custom_probes WHERE user_email = ${userEmail}`
+    }
+
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Custom probes DELETE error:', err)
