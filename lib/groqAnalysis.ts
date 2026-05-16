@@ -8,20 +8,20 @@ export async function analyzeWithGroq(
   citation: string
   severity: 'Critical' | 'High' | 'Medium' | 'Low'
 }> {
-  const openaiKey = process.env.OPENAI_API_KEY
-  if (!openaiKey) {
+  const togetherKey = process.env.TOGETHER_API_KEY
+  if (!togetherKey) {
     return { vulnerable: false, reason: 'API key missing.', citation: '', severity: 'Low' }
   }
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch('https://api.together.xyz/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiKey}`,
+        'Authorization': `Bearer ${togetherKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',  // $0.15/1M input, $0.60/1M output — ~$0.016 per full audit
+        model: 'gpt-oss-20b',  // $0.05/1M input, $0.20/1M output — ~$0.004 per full audit
         max_tokens: 200,
         temperature: 0,
         messages: [

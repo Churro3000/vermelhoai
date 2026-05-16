@@ -593,7 +593,7 @@ function DashboardContent() {
                 ? `200+ built-in probes + ${customProbes.length} custom probe${customProbes.length === 1 ? '' : 's'} will run.`
                 : '200+ adversarial probes will run against it.'}
             </p>
-            {testLimit !== null && (
+            {testLimit !== null && userPlan === 'starter' && (
               <div className="mb-4 px-3 py-2 bg-[#F8F8F5] rounded-lg border border-gray-200 flex items-center justify-between">
                 <span className="text-xs text-gray-500 font-medium">{testsUsed}/{testLimit} tests used this month</span>
                 <span className={`text-xs font-semibold ${testsRemaining === 1 ? 'text-[#CC1A1A]' : 'text-gray-500'}`}>{testsRemaining} remaining</span>
