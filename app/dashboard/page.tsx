@@ -62,7 +62,7 @@ function AuditLoadingOverlay({ probeCount }: { probeCount: number }) {
   const startRef = useRef<number>(0)
 
   // probeCount × 1000ms delay + overhead
-  const estimatedMs = probeCount * 1000 + 3000
+  const estimatedMs = probeCount * 250 + 3000
 
   const statusMessages = [
     { at: 0,  text: 'Initialising attack engine...' },

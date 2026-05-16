@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
         }
       } else {
         analysis = await analyzeWithGroq(attack.prompt, responseText, attack.category)
-        await new Promise(resolve => setTimeout(resolve, 1000)) // CHANGE TO 300 when Groq paid opens
+        await new Promise(resolve => setTimeout(resolve, 250)) // Together AI dynamic limits — safe at this speed
       }
 
       results.push({
