@@ -106,7 +106,6 @@ export default function UpgradePage() {
                 '3 audits included',
                 '30 adversarial probes per audit',
                 'PDF security reports',
-                'Email support',
               ].map(f => (
                 <div key={f} className="flex items-center gap-3 text-sm text-gray-600">
                   <Check className="w-4 h-4 text-[#00A651] shrink-0" /> {f}
@@ -126,7 +125,11 @@ export default function UpgradePage() {
           </div>
 
           {/* Starter */}
-          <div className="card">
+          <div className="card border-[#CC1A1A] relative overflow-hidden shadow-sm">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#CC1A1A]" />
+            <div className="absolute top-4 right-4">
+              <span className="badge badge-red text-xs">Most popular</span>
+            </div>
             <div className="mb-6">
               <h3 className="text-2xl font-black text-gray-900 mb-1"
                 style={{ fontFamily: 'var(--font-display)' }}>Starter</h3>
@@ -163,10 +166,7 @@ export default function UpgradePage() {
           </div>
 
           {/* Professional */}
-          <div className="card border-[#CC1A1A] relative overflow-hidden">
-            <div className="absolute top-4 right-4">
-              <span className="badge badge-red text-xs">Most popular</span>
-            </div>
+          <div className="card relative overflow-hidden">
             <div className="mb-6">
               <h3 className="text-2xl font-black text-gray-900 mb-1"
                 style={{ fontFamily: 'var(--font-display)' }}>Professional</h3>

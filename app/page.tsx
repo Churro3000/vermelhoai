@@ -328,7 +328,7 @@ export default function LandingPage() {
                 <p className="text-gray-400 text-xs font-medium mt-2.5">No expiry · No subscription</p>
               </div>
               <div className="space-y-2.5 mb-8">
-                {['3 audits included', '30 adversarial probes', 'PDF security reports', 'Email support'].map(f => (
+                {['3 audits included', '30 adversarial probes', 'PDF security reports'].map(f => (
                   <div key={f} className="flex items-center gap-2.5 text-sm text-gray-600">
                     <Check className="w-3.5 h-3.5 text-[#00A651] shrink-0" /> {f}
                   </div>
@@ -340,7 +340,11 @@ export default function LandingPage() {
             </div>
 
             {/* Starter */}
-            <div className="card hover:border-gray-300 hover:shadow-sm transition-all duration-200">
+            <div className="card border-[#CC1A1A] relative overflow-hidden shadow-sm">
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#CC1A1A]" />
+              <div className="absolute top-4 right-4">
+                <span className="badge badge-red text-xs">Most popular</span>
+              </div>
               <div className="mb-7">
                 <h3 className="text-xl font-bold text-gray-900 mb-1 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>Starter</h3>
                 <p className="text-gray-400 text-sm mb-5">For AI developers and small teams</p>
@@ -363,11 +367,7 @@ export default function LandingPage() {
             </div>
 
             {/* Professional */}
-            <div className="card border-[#CC1A1A] relative overflow-hidden shadow-sm">
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-[#CC1A1A]" />
-              <div className="absolute top-4 right-4">
-                <span className="badge badge-red text-xs">Most popular</span>
-              </div>
+            <div className="card relative overflow-hidden">
               <div className="mb-7">
                 <h3 className="text-xl font-bold text-gray-900 mb-1 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>Professional</h3>
                 <p className="text-gray-400 text-sm mb-5">For AI companies shipping to production</p>
