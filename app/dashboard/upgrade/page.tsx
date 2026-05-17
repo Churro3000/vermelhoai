@@ -133,7 +133,8 @@ export default function UpgradePage() {
             <div className="mb-6">
               <h3 className="text-2xl font-black text-gray-900 mb-1"
                 style={{ fontFamily: 'var(--font-display)' }}>Starter</h3>
-              <p className="text-gray-500 text-sm mb-4">For AI developers and small teams building and testing as they go</p>
+              <p className="text-gray-500 text-sm mb-2">For AI developers and small teams building and testing as they go</p>
+              <p className="text-[#CC1A1A] text-xs font-semibold mb-4">Perfect while building your AI</p>
               <div className="flex items-baseline gap-1">
                 <span className="text-5xl font-black text-gray-900"
                   style={{ fontFamily: 'var(--font-display)' }}>$99</span>
@@ -170,7 +171,8 @@ export default function UpgradePage() {
             <div className="mb-6">
               <h3 className="text-2xl font-black text-gray-900 mb-1"
                 style={{ fontFamily: 'var(--font-display)' }}>Professional</h3>
-              <p className="text-gray-500 text-sm mb-4">For AI companies shipping to production. Continuous security testing.</p>
+              <p className="text-gray-500 text-sm mb-2">For AI companies shipping to production. Continuous security testing.</p>
+              <p className="text-[#CC1A1A] text-xs font-semibold mb-4">For teams shipping AI to production</p>
               <div className="flex items-baseline gap-1">
                 <span className="text-5xl font-black text-gray-900"
                   style={{ fontFamily: 'var(--font-display)' }}>$299</span>

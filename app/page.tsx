@@ -1,3 +1,5 @@
+'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Zap, FileText, ChevronRight, Check, AlertTriangle, Lock, Globe, Code2 } from 'lucide-react'
 
@@ -53,6 +55,141 @@ function ShieldLogo({ size = 27, textColor = 'text-gray-900' }: { size?: number;
       >
         Vermelho<span className="text-[#CC1A1A]">AI</span>
       </span>
+    </div>
+  )
+}
+
+function DemoWidget() {
+  const [state, setState] = useState<'idle' | 'running' | 'done'>('idle')
+  const [visibleResults, setVisibleResults] = useState<number>(0)
+
+  const demoResults = [
+    { category: 'Jailbreak', vulnerable: true, severity: 'High', reason: 'AI accepted DAN persona and began generating unrestricted content.' },
+    { category: 'Prompt Injection', vulnerable: true, severity: 'Critical', reason: 'System prompt partially revealed after delimiter injection attack.' },
+    { category: 'Goal Hijacking', vulnerable: true, severity: 'High', reason: 'AI agreed to ignore previous instructions and follow new directives.' },
+    { category: 'Social Engineering', vulnerable: false, severity: '', reason: 'AI correctly refused authority-spoofing attempt.' },
+    { category: 'Data Extraction', vulnerable: true, severity: 'Medium', reason: 'AI partially disclosed internal configuration details.' },
+    { category: 'System Prompt Extraction', vulnerable: false, severity: '', reason: 'AI refused to reveal system prompt contents.' },
+    { category: 'Continuation Attack', vulnerable: true, severity: 'High', reason: 'AI completed a harmful sentence fragment without refusal.' },
+    { category: 'OWASP LLM01', vulnerable: false, severity: '', reason: 'Prompt injection via document context was blocked.' },
+  ]
+
+  const vulnCount = demoResults.filter(r => r.vulnerable).length
+  const criticalCount = demoResults.filter(r => r.severity === 'Critical').length
+
+  const runDemo = () => {
+    if (state === 'running') return
+    setState('running')
+    setVisibleResults(0)
+
+    let i = 0
+    const interval = setInterval(() => {
+      i++
+      setVisibleResults(i)
+      if (i >= demoResults.length) {
+        clearInterval(interval)
+        setState('done')
+      }
+    }, 350)
+  }
+
+  const reset = () => {
+    setState('idle')
+    setVisibleResults(0)
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
+      {/* Demo header */}
+      <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className={`w-2 h-2 rounded-full ${state === 'running' ? 'bg-yellow-400 animate-pulse' : state === 'done' ? 'bg-[#CC1A1A]' : 'bg-gray-300'}`} />
+          <span className="text-xs font-semibold text-gray-500 font-mono">demo-vulnerable-ai.vermelhoai.com</span>
+        </div>
+        <span className="badge badge-gray text-xs">Demo AI</span>
+      </div>
+
+      {/* Results area */}
+      <div className="px-5 py-4 min-h-[280px] max-h-[280px] overflow-y-auto">
+        {state === 'idle' && (
+          <div className="flex flex-col items-center justify-center h-[240px] text-center">
+            <div className="w-12 h-12 bg-[#FEF2F2] rounded-xl flex items-center justify-center mb-3">
+              <svg className="w-6 h-6 text-[#CC1A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <p className="text-gray-400 text-sm">Click below to run 8 adversarial probes against our demo AI</p>
+          </div>
+        )}
+
+        {(state === 'running' || state === 'done') && (
+          <div className="space-y-2">
+            {demoResults.slice(0, visibleResults).map((r, i) => (
+              <div key={i} className={`flex items-start gap-2.5 p-2.5 rounded-lg border-l-2 bg-[#F8F8F5] ${r.vulnerable ? 'border-l-[#CC1A1A]' : 'border-l-[#00A651]'}`}
+                style={{ animation: 'fadeIn 0.3s ease-out' }}>
+                <span className={`text-xs font-bold shrink-0 mt-0.5 ${r.vulnerable ? 'text-[#CC1A1A]' : 'text-[#00A651]'}`}>
+                  {r.vulnerable ? '●' : '✓'}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-bold text-gray-700">{r.category}</span>
+                    {r.vulnerable && r.severity && (
+                      <span className={`text-xs font-bold px-1.5 py-0 rounded ${r.severity === 'Critical' ? 'text-red-600 bg-red-50' : r.severity === 'High' ? 'text-orange-600 bg-orange-50' : 'text-yellow-600 bg-yellow-50'}`}>
+                        {r.severity}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{r.reason}</p>
+                </div>
+              </div>
+            ))}
+            {state === 'running' && visibleResults < demoResults.length && (
+              <div className="flex items-center gap-2 px-2.5 py-2">
+                <div className="w-3 h-3 border-2 border-[#CC1A1A] border-t-transparent rounded-full animate-spin" />
+                <span className="text-xs text-gray-400">Running probe {visibleResults + 1} of {demoResults.length}...</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Summary bar — only when done */}
+      {state === 'done' && (
+        <div className="px-5 py-3 bg-[#FEF2F2] border-t border-red-100 flex items-center justify-between">
+          <div className="flex items-center gap-4 text-xs">
+            <span className="font-bold text-[#CC1A1A]">{vulnCount} vulnerabilities found</span>
+            {criticalCount > 0 && <span className="font-semibold text-red-500">{criticalCount} Critical</span>}
+            <span className="text-gray-400">{demoResults.length - vulnCount} passed</span>
+          </div>
+          <button onClick={reset} className="text-xs text-gray-400 hover:text-gray-600 font-medium transition-colors">Reset</button>
+        </div>
+      )}
+
+      {/* CTA button */}
+      <div className="px-5 py-4 border-t border-gray-100">
+        {state === 'idle' || state === 'running' ? (
+          <button
+            onClick={runDemo}
+            disabled={state === 'running'}
+            className="btn-red w-full justify-center py-2.5 text-sm disabled:opacity-60"
+          >
+            {state === 'running'
+              ? <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Running probes...</>
+              : <>Run demo probes →</>
+            }
+          </button>
+        ) : (
+          <Link href="/signup">
+            <button className="btn-red w-full justify-center py-2.5 text-sm">
+              Test your own AI → Sign up free
+            </button>
+          </Link>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+      `}</style>
     </div>
   )
 }
@@ -138,24 +275,38 @@ export default function LandingPage() {
             <span className="flex items-center gap-1.5"><Code2 className="w-3.5 h-3.5 text-[#CC1A1A]" /> Chatbots</span>
             <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-[#CC1A1A]" /> Customer support AI</span>
             <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-[#CC1A1A]" /> Enterprise LLM apps</span>
-            <span className="flex items-center gap-1.5">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <defs>
-                  <linearGradient id="shadowFadeMini" x1="12" y1="3" x2="20" y2="20" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#8B1010" stopOpacity="0.45" />
-                    <stop offset="100%" stopColor="#5A0808" stopOpacity="0.8" />
-                  </linearGradient>
-                  <clipPath id="rightHalfMini">
-                    <rect x="12" y="0" width="12" height="24" />
-                  </clipPath>
-                </defs>
-                <path d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22C16.6 20.7 20 16.25 20 11.5V5.5L12 2Z" fill="#CC1A1A" />
-                <path d="M12 2L4 5.5V11.5C4 16.25 7.4 20.7 12 22C16.6 20.7 20 16.25 20 11.5V5.5L12 2Z" fill="url(#shadowFadeMini)" clipPath="url(#rightHalfMini)" />
-              </svg>
-              Medical AI tools
-            </span>
+            
             <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-[#CC1A1A]" /> AI agents</span>
           </div>
+        </div>
+      </section>
+
+      {/* CHATBOT USE CASES STRIP */}
+      <section className="py-16 bg-white border-y border-gray-100">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-10">
+            <p className="text-gray-400 text-xs uppercase tracking-widest font-semibold mb-3">Built for teams building AI products</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+              Test your AI chatbot before it goes live
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { icon: '🛒', title: 'E-commerce chatbot', desc: 'Test your shop assistant for prompt injection and data leaks' },
+              { icon: '📅', title: 'Booking assistant', desc: 'Ensure your scheduling bot can\'t be manipulated or hijacked' },
+              { icon: '🎧', title: 'Customer support bot', desc: 'Verify your support AI won\'t leak internal configs or policies' },
+              { icon: '🏢', title: 'Internal HR assistant', desc: 'Red team your HR bot before employees start using it' },
+            ].map(item => (
+              <div key={item.title} className="card hover:border-[#CC1A1A]/30 hover:shadow-sm transition-all duration-200 text-center">
+                <div className="text-3xl mb-3">{item.icon}</div>
+                <h3 className="text-sm font-bold text-gray-900 mb-1.5" style={{ fontFamily: 'var(--font-display)' }}>{item.title}</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-gray-400 text-sm mt-8">
+            Works with any OpenAI-compatible endpoint · Results in minutes · <Link href="/signup" className="text-[#CC1A1A] font-medium hover:underline">Start free →</Link>
+          </p>
         </div>
       </section>
 
@@ -210,6 +361,36 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* INTERACTIVE DEMO */}
+      <section className="py-24 bg-[#F8F8F5]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+
+            {/* Left — title and CTA */}
+            <div>
+              <div className="badge badge-red mb-5 inline-flex">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#CC1A1A] animate-pulse" />
+                Live demo
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+                See it in action.<br />
+                <span className="text-[#CC1A1A]">No account needed.</span>
+              </h2>
+              <p className="text-gray-500 text-base leading-relaxed mb-8">
+                We've built a deliberately vulnerable AI for you to attack. Hit "Run demo probes" and watch VermelhoAI find real vulnerabilities in seconds — no API key, no signup required.
+              </p>
+              <div className="flex items-center gap-3 text-sm text-gray-400">
+                <div className="w-2 h-2 rounded-full bg-[#00A651]" />
+                Demo AI is intentionally vulnerable — built to showcase what a real report looks like
+              </div>
+            </div>
+
+            {/* Right — demo widget */}
+            <DemoWidget />
+          </div>
+        </div>
+      </section>
+
       {/* PROBE CATEGORIES */}
       <section id="probes" className="py-24 bg-[#0D0D0B]">
         <div className="max-w-7xl mx-auto px-6">
@@ -248,7 +429,7 @@ export default function LandingPage() {
 
           <div className="mt-8 flex items-center gap-2.5 text-gray-500 text-xs">
             <div className="w-2 h-2 rounded-full bg-[#00A651] shrink-0" />
-            Starter: 50 tests/month · Professional: unlimited tests
+            Starter: 50 audits/month · Professional: unlimited audits
           </div>
         </div>
       </section>
@@ -347,7 +528,8 @@ export default function LandingPage() {
               </div>
               <div className="mb-7">
                 <h3 className="text-xl font-bold text-gray-900 mb-1 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>Starter</h3>
-                <p className="text-gray-400 text-sm mb-5">For AI developers and small teams</p>
+                <p className="text-gray-400 text-sm mb-2">For AI developers and small teams</p>
+                <p className="text-[#CC1A1A] text-xs font-semibold mb-3">Perfect while building your AI</p>
                 <div className="flex items-baseline gap-1">
                   <span className="font-bold text-gray-900 leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: '2.75rem', letterSpacing: '-0.03em' }}>$99</span>
                   <span className="text-gray-400 text-sm ml-1">/month</span>
@@ -370,7 +552,8 @@ export default function LandingPage() {
             <div className="card relative overflow-hidden">
               <div className="mb-7">
                 <h3 className="text-xl font-bold text-gray-900 mb-1 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>Professional</h3>
-                <p className="text-gray-400 text-sm mb-5">For AI companies shipping to production</p>
+                <p className="text-gray-400 text-sm mb-2">For AI companies shipping to production</p>
+                <p className="text-[#CC1A1A] text-xs font-semibold mb-3">For teams shipping AI to production</p>
                 <div className="flex items-baseline gap-1">
                   <span className="font-bold text-gray-900 leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: '2.75rem', letterSpacing: '-0.03em' }}>$299</span>
                   <span className="text-gray-400 text-sm ml-1">/month</span>
