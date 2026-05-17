@@ -143,7 +143,7 @@ export default function UpgradePage() {
             </div>
             <div className="space-y-3 mb-8">
               {[
-                '50 tests per month',
+                '50 audits per month',
                 '200+ adversarial probes (updated monthly)',
                 'PDF security reports',
                 'Email support (72hr response)',
@@ -180,7 +180,7 @@ export default function UpgradePage() {
             </div>
             <div className="space-y-3 mb-8">
               {[
-                'Unlimited tests',
+                'Unlimited audits',
                 '200+ adversarial probes (updated monthly)',
                 'PDF reports + CSV export',
                 'API access for CI/CD integration',
