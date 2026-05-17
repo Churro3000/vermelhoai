@@ -483,13 +483,21 @@ function DashboardContent() {
                   )}
                 </button>
               )}
-              <button
-                onClick={() => setShowNewAudit(true)}
-                disabled={isAtLimit}
-                className="btn-red flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Plus className="w-4 h-4" /> Run New Test
-              </button>
+              {isAtLimit && userPlan === 'scan' ? (
+                <Link href="/dashboard/upgrade">
+                  <button className="btn-red flex items-center gap-2 whitespace-nowrap">
+                    <Zap className="w-4 h-4" /> Buy 3 more audits
+                  </button>
+                </Link>
+              ) : (
+                <button
+                  onClick={() => setShowNewAudit(true)}
+                  disabled={isAtLimit}
+                  className="btn-red flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus className="w-4 h-4" /> Run New Test
+                </button>
+              )}
             </div>
           </div>
         </div>

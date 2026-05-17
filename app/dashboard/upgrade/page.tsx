@@ -30,10 +30,10 @@ function ShieldLogo({ size = 27, textColor = 'text-gray-900' }: { size?: number;
 }
 
 export default function UpgradePage() {
-  const [loading, setLoading] = useState<'starter' | 'professional' | null>(null)
+  const [loading, setLoading] = useState<'scan' | 'starter' | 'professional' | null>(null)
   const [error, setError] = useState('')
 
-  const handleUpgrade = async (plan: 'starter' | 'professional') => {
+  const handleUpgrade = async (plan: 'scan' | 'starter' | 'professional') => {
     setLoading(plan)
     setError('')
     try {
@@ -88,7 +88,42 @@ export default function UpgradePage() {
           </div>
         )}
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-3 gap-6">
+
+          {/* Quick Scan */}
+          <div className="card">
+            <div className="mb-6">
+              <h3 className="text-2xl font-black text-gray-900 mb-1" style={{ fontFamily: 'var(--font-display)' }}>Quick Scan</h3>
+              <p className="text-gray-500 text-sm mb-4">3 audits, no expiry. Try it out before committing to a plan.</p>
+              <div className="flex items-baseline gap-1">
+                <span className="text-5xl font-black text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>$5</span>
+                <span className="text-gray-400">one-time</span>
+              </div>
+              <p className="text-gray-400 text-xs font-medium mt-2">No subscription · No expiry</p>
+            </div>
+            <div className="space-y-3 mb-8">
+              {[
+                '3 audits included',
+                '30 adversarial probes per audit',
+                'PDF security reports',
+                'Email support',
+              ].map(f => (
+                <div key={f} className="flex items-center gap-3 text-sm text-gray-600">
+                  <Check className="w-4 h-4 text-[#00A651] shrink-0" /> {f}
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => handleUpgrade('scan')}
+              disabled={loading !== null}
+              className="btn-outline w-full justify-center py-3.5 disabled:opacity-60"
+            >
+              {loading === 'scan'
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting...</>
+                : <>Buy Quick Scan <ChevronRight className="w-4 h-4" /></>
+              }
+            </button>
+          </div>
 
           {/* Starter */}
           <div className="card">

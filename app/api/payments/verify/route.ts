@@ -18,6 +18,28 @@ export async function POST(req: NextRequest) {
     const payload = JSON.parse(rawBody)
     const eventName = payload.meta?.event_name
 
+    // Handle one-time Quick Scan purchase
+    if (eventName === 'order_created') {
+      const attrs = payload.data?.attributes
+      const userEmail = attrs?.user_email
+      const variantId = String(attrs?.first_order_item?.variant_id ?? '')
+
+      if (variantId === String(process.env.LEMONSQUEEZY_SCAN_VARIANT_ID) && userEmail) {
+        const sql = neon(process.env.DATABASE_URL!)
+        // Add 3 credits on top of any existing credits (stacking purchases)
+        await sql`
+          INSERT INTO subscriptions (user_email, plan, status, expires_at, scan_credits)
+          VALUES (${userEmail}, 'scan', 'active', NULL, 3)
+          ON CONFLICT (user_email)
+          DO UPDATE SET
+            plan = CASE WHEN subscriptions.plan IN ('starter', 'professional') THEN subscriptions.plan ELSE 'scan' END,
+            status = 'active',
+            scan_credits = COALESCE(subscriptions.scan_credits, 0) + 3
+        `
+      }
+      return NextResponse.json({ received: true })
+    }
+
     // Only handle subscription created/updated events
     if (!['subscription_created', 'subscription_updated'].includes(eventName)) {
       return NextResponse.json({ received: true })

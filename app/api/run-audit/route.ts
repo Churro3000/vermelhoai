@@ -28,32 +28,47 @@ export async function POST(req: NextRequest) {
     `
     const userPlan = subRows[0]?.plan ?? 'free'
 
-    const testLimit = userPlan === 'professional' ? null : userPlan === 'starter' ? 50 : 10
+    const testLimit = userPlan === 'professional' ? null : userPlan === 'starter' ? 50 : userPlan === 'scan' ? 3 : 10
 
     if (testLimit !== null) {
-      const expiresAt = subRows[0]?.expires_at ? new Date(subRows[0].expires_at) : null
-      const periodStart = expiresAt
-        ? new Date(expiresAt.getFullYear(), expiresAt.getMonth() - 1, expiresAt.getDate()).toISOString()
-        : new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
-      const periodEnd = expiresAt ? expiresAt.toISOString() : new Date().toISOString()
+      if (userPlan === 'scan') {
+        // Scan plan: check total audits ever against purchased credits
+        const scanCredits = subRows[0]?.scan_credits ?? 3
+        const usageRows = await sql`
+          SELECT COUNT(*) as count FROM audits WHERE user_email = ${userEmail}
+        `
+        const totalAudits = parseInt(usageRows[0]?.count ?? '0')
+        if (totalAudits >= scanCredits) {
+          return NextResponse.json(
+            { error: `You've used all ${scanCredits} Quick Scan audits. Purchase more to continue.` },
+            { status: 403 }
+          )
+        }
+      } else {
+        const expiresAt = subRows[0]?.expires_at ? new Date(subRows[0].expires_at) : null
+        const periodStart = expiresAt
+          ? new Date(expiresAt.getFullYear(), expiresAt.getMonth() - 1, expiresAt.getDate()).toISOString()
+          : new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+        const periodEnd = expiresAt ? expiresAt.toISOString() : new Date().toISOString()
 
-      const usageRows = await sql`
-        SELECT COUNT(*) as count FROM audits
-        WHERE user_email = ${userEmail}
-        AND timestamp >= ${periodStart}
-        AND timestamp <= ${periodEnd}
-      `
-      const testsUsedThisPeriod = parseInt(usageRows[0]?.count ?? '0')
+        const usageRows = await sql`
+          SELECT COUNT(*) as count FROM audits
+          WHERE user_email = ${userEmail}
+          AND timestamp >= ${periodStart}
+          AND timestamp <= ${periodEnd}
+        `
+        const testsUsedThisPeriod = parseInt(usageRows[0]?.count ?? '0')
 
-      if (testsUsedThisPeriod >= testLimit) {
-        return NextResponse.json(
-          {
-            error: userPlan === 'free'
-              ? `You've used all ${testLimit} free tests. Upgrade to run more.`
-              : `You've used all ${testLimit} tests this billing period. Your limit resets on your next renewal date.`
-          },
-          { status: 403 }
-        )
+        if (testsUsedThisPeriod >= testLimit) {
+          return NextResponse.json(
+            {
+              error: userPlan === 'free'
+                ? `You've used all ${testLimit} free tests. Upgrade to run more.`
+                : `You've used all ${testLimit} tests this billing period. Your limit resets on your next renewal date.`
+            },
+            { status: 403 }
+          )
+        }
       }
     }
 
@@ -71,7 +86,7 @@ export async function POST(req: NextRequest) {
     // ACTION: Buy Vercel Pro ($20) when first customer pays. maxDuration=300 kicks in automatically.
     // FUTURE: When Groq paid reopens → change delay from 1000 to 300ms
     // ────────────────────────────────────────────────────────────────────────
-    const probeLimit = userPlan === 'free' ? 10 : probes.length
+    const probeLimit = userPlan === 'free' ? 10 : userPlan === 'scan' ? 30 : probes.length
     const activeProbes = probes.slice(0, probeLimit)
 
     let allProbes = [...activeProbes]

@@ -7,13 +7,15 @@ export async function POST(req: NextRequest) {
     const { email, name } = JSON.parse(Buffer.from(session, 'base64').toString())
 
     const { plan } = await req.json()
-    if (!['starter', 'professional'].includes(plan)) {
+    if (!['scan', 'starter', 'professional'].includes(plan)) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
     }
 
     const variantId = plan === 'starter'
       ? process.env.LEMONSQUEEZY_STARTER_VARIANT_ID
-      : process.env.LEMONSQUEEZY_PROFESSIONAL_VARIANT_ID
+      : plan === 'professional'
+      ? process.env.LEMONSQUEEZY_PROFESSIONAL_VARIANT_ID
+      : process.env.LEMONSQUEEZY_SCAN_VARIANT_ID
 
     const res = await fetch('https://api.lemonsqueezy.com/v1/checkouts', {
       method: 'POST',

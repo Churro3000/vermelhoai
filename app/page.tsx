@@ -314,7 +314,30 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+
+            {/* Quick Scan */}
+            <div className="card hover:border-gray-300 hover:shadow-sm transition-all duration-200">
+              <div className="mb-7">
+                <h3 className="text-xl font-bold text-gray-900 mb-1 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>Quick Scan</h3>
+                <p className="text-gray-400 text-sm mb-5">Try it out — no subscription needed</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="font-bold text-gray-900 leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: '2.75rem', letterSpacing: '-0.03em' }}>$5</span>
+                  <span className="text-gray-400 text-sm ml-1">one-time</span>
+                </div>
+                <p className="text-gray-400 text-xs font-medium mt-2.5">No expiry · No subscription</p>
+              </div>
+              <div className="space-y-2.5 mb-8">
+                {['3 audits included', '30 adversarial probes', 'PDF security reports', 'Email support'].map(f => (
+                  <div key={f} className="flex items-center gap-2.5 text-sm text-gray-600">
+                    <Check className="w-3.5 h-3.5 text-[#00A651] shrink-0" /> {f}
+                  </div>
+                ))}
+              </div>
+              <Link href="/signup" className="block">
+                <button className="btn-outline w-full justify-center py-2.5 text-sm">Get Quick Scan</button>
+              </Link>
+            </div>
 
             {/* Starter */}
             <div className="card hover:border-gray-300 hover:shadow-sm transition-all duration-200">
