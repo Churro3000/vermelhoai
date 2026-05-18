@@ -412,7 +412,7 @@ function DashboardContent() {
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-[#00A651] shrink-0" />
                 <p className="text-green-700 text-sm font-semibold">
-                  {userPlan === 'starter' ? 'Starter Plan' : 'Professional Plan'} — active
+                  {userPlan === 'starter' ? 'Starter Plan' : userPlan === 'scan' ? 'Quick Scan' : 'Professional Plan'} — active
                 </p>
               </div>
               {userPlan === 'starter' && testLimit !== null && (
