@@ -190,7 +190,7 @@ function DashboardContent() {
   const probeCount = userPlan === 'free' ? 10 : 210
 
   useEffect(() => {
-    fetch('/api/subscription')
+    fetch('/api/subscription', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         setUserPlan(data.plan ?? 'free')
