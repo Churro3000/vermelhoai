@@ -32,10 +32,13 @@ export async function POST(req: NextRequest) {
 
     if (testLimit !== null) {
       if (userPlan === 'scan') {
-        // Scan plan: check total audits ever against purchased credits
+        // Count only audits since scan subscription was created
+        const scanCreatedAt = subRows[0]?.created_at ?? new Date().toISOString()
         const scanCredits = subRows[0]?.scan_credits ?? 3
         const usageRows = await sql`
-          SELECT COUNT(*) as count FROM audits WHERE user_email = ${userEmail}
+          SELECT COUNT(*) as count FROM audits
+          WHERE user_email = ${userEmail}
+          AND timestamp >= ${scanCreatedAt}
         `
         const totalAudits = parseInt(usageRows[0]?.count ?? '0')
         if (totalAudits >= scanCredits) {
