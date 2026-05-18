@@ -282,7 +282,7 @@ export default function LandingPage() {
       </section>
 
       {/* CHATBOT USE CASES STRIP */}
-      <section className="py-16 bg-white border-y border-gray-100">
+      <section className="pt-16 pb-8 bg-white border-y border-gray-100">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-10">
             <p className="text-gray-400 text-xs uppercase tracking-widest font-semibold mb-3">Built for teams building AI products</p>
@@ -292,13 +292,49 @@ export default function LandingPage() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { icon: '🛒', title: 'E-commerce chatbot', desc: 'Test your shop assistant for prompt injection and data leaks' },
-              { icon: '📅', title: 'Booking assistant', desc: 'Ensure your scheduling bot can\'t be manipulated or hijacked' },
-              { icon: '🎧', title: 'Customer support bot', desc: 'Verify your support AI won\'t leak internal configs or policies' },
-              { icon: '🏢', title: 'Internal HR assistant', desc: 'Red team your HR bot before employees start using it' },
+              {
+                icon: (
+                  <svg className="w-6 h-6 text-[#CC1A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                  </svg>
+                ),
+                title: 'E-commerce chatbot',
+                desc: 'Test your shop assistant for prompt injection and data leaks'
+              },
+              {
+                icon: (
+                  <svg className="w-6 h-6 text-[#CC1A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                  </svg>
+                ),
+                title: 'Booking assistant',
+                desc: "Ensure your scheduling bot can't be manipulated or hijacked"
+              },
+              {
+                icon: (
+                  <svg className="w-6 h-6 text-[#CC1A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
+                  </svg>
+                ),
+                title: 'Customer support bot',
+                desc: "Verify your support AI won't leak internal configs or policies"
+              },
+              {
+                icon: (
+                  <svg className="w-6 h-6 text-[#CC1A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                  </svg>
+                ),
+                title: 'Internal HR assistant',
+                desc: 'Red team your HR bot before employees start using it'
+              },
             ].map(item => (
               <div key={item.title} className="card hover:border-[#CC1A1A]/30 hover:shadow-sm transition-all duration-200 text-center">
-                <div className="text-3xl mb-3">{item.icon}</div>
+                <div className="flex justify-center mb-3">
+                  <div className="w-11 h-11 bg-[#FEF2F2] rounded-xl flex items-center justify-center">
+                    {item.icon}
+                  </div>
+                </div>
                 <h3 className="text-sm font-bold text-gray-900 mb-1.5" style={{ fontFamily: 'var(--font-display)' }}>{item.title}</h3>
                 <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
               </div>
@@ -362,7 +398,7 @@ export default function LandingPage() {
       </section>
 
       {/* INTERACTIVE DEMO */}
-      <section className="py-24 bg-[#F8F8F5]">
+      <section className="pt-12 pb-24 bg-[#F8F8F5]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
 
@@ -374,15 +410,11 @@ export default function LandingPage() {
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
                 See it in action.<br />
-                <span className="text-[#CC1A1A]">No account needed.</span>
+                <span className="text-[#CC1A1A]">Try our demo.</span>
               </h2>
               <p className="text-gray-500 text-base leading-relaxed mb-8">
-                We've built a deliberately vulnerable AI for you to attack. Hit "Run demo probes" and watch VermelhoAI find real vulnerabilities in seconds — no API key, no signup required.
+                We've built a deliberately vulnerable AI for you to attack. Hit "Run demo probes" and watch VermelhoAI find real vulnerabilities in seconds.
               </p>
-              <div className="flex items-center gap-3 text-sm text-gray-400">
-                <div className="w-2 h-2 rounded-full bg-[#00A651]" />
-                Demo AI is intentionally vulnerable — built to showcase what a real report looks like
-              </div>
             </div>
 
             {/* Right — demo widget */}
