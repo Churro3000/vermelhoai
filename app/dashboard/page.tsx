@@ -187,7 +187,7 @@ function DashboardContent() {
   const searchParams = useSearchParams()
   const paymentStatus = searchParams.get('payment')
 
-  const probeCount = userPlan === 'free' ? 10 : 210
+  const probeCount = userPlan === 'free' ? 10 : userPlan === 'scan' ? 30 : 210
 
   useEffect(() => {
     fetch('/api/subscription', { cache: 'no-store' })
@@ -405,8 +405,41 @@ function DashboardContent() {
           </div>
         )}
 
+        {/* SCAN PLAN STATUS */}
+        {userPlan === 'scan' && (
+          <div className="card border-gray-200 mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-[#CC1A1A] shrink-0" />
+                <p className="text-gray-700 text-sm font-semibold">Quick Scan</p>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <span className={`font-semibold ${isAtLimit ? 'text-[#CC1A1A]' : 'text-gray-700'}`}>
+                  {testsUsed}/{testLimit} scans used
+                </span>
+                <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${isAtLimit ? 'bg-[#CC1A1A]' : 'bg-[#CC1A1A]/60'}`}
+                    style={{ width: `${usagePercent}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+            {isAtLimit && (
+              <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between gap-4">
+                <p className="text-[#CC1A1A] text-xs font-semibold">All 3 scans used. Buy more to continue.</p>
+                <Link href="/dashboard/upgrade">
+                  <button className="btn-red text-xs py-1.5 px-3 flex items-center gap-1.5">
+                    <Zap className="w-3 h-3" /> Buy 3 more audits
+                  </button>
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* PLAN STATUS */}
-        {userPlan !== 'free' && (
+        {userPlan !== 'free' && userPlan !== 'scan' && (
           <div className="card border-[#00A651]/30 bg-[#F0FDF4]/50 mb-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -599,6 +632,8 @@ function DashboardContent() {
             <p className="text-gray-500 text-sm mb-6 ml-12">
               Enter your AI endpoint. {userPlan === 'professional' && customProbes.length > 0
                 ? `200+ built-in probes + ${customProbes.length} custom probe${customProbes.length === 1 ? '' : 's'} will run.`
+                : userPlan === 'scan'
+                ? '30 adversarial probes will run against your endpoint.'
                 : '200+ adversarial probes will run against it.'}
             </p>
             {testLimit !== null && userPlan === 'starter' && (
