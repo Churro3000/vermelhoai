@@ -62,15 +62,33 @@ Respond with JSON only.`
     const data = await res.json()
     const text = data.choices?.[0]?.message?.content ?? ''
 
-    // Strip markdown fences then find the first {...} block
-    const cleaned = text.replace(/```json|```/gi, '').trim()
-    const jsonMatch = cleaned.match(/\{[\s\S]*?\}/)
+    console.log('RAW MODEL OUTPUT:', JSON.stringify(text))
+
+    // Strip markdown, thinking tags, and find JSON
+    const stripped = text
+      .replace(/<think>[\s\S]*?<\/think>/gi, '')  // remove thinking blocks
+      .replace(/```json|```/gi, '')                // remove markdown fences
+      .trim()
+
+    // Try to find JSON object anywhere in the response
+    const jsonMatch = stripped.match(/\{[\s\S]*"vulnerable"[\s\S]*\}/)
     if (!jsonMatch) {
-      console.error('No JSON found in Groq response:', text)
+      console.error('No JSON found. Raw output was:', text)
       return { vulnerable: false, reason: 'Could not parse analysis.', citation: '', severity: 'Low' }
     }
 
-    const parsed = JSON.parse(jsonMatch[0])
+    let parsed
+    try {
+      parsed = JSON.parse(jsonMatch[0])
+    } catch {
+      // Try extracting just the first complete JSON object
+      const fallback = stripped.match(/\{[^{}]+\}/)
+      if (!fallback) {
+        console.error('JSON parse failed. Raw:', text)
+        return { vulnerable: false, reason: 'Could not parse analysis.', citation: '', severity: 'Low' }
+      }
+      parsed = JSON.parse(fallback[0])
+    }
 
     return {
       vulnerable: Boolean(parsed.vulnerable),
