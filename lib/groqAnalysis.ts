@@ -21,9 +21,10 @@ export async function analyzeWithGroq(
         'Authorization': `Bearer ${togetherKey}`,
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-20b',  // $0.05/1M input, $0.20/1M output — ~$0.004 per full audit
+        model: 'meta-llama/Meta-Llama-3-8B-Instruct-Lite',  // $0.10/1M flat — reliable JSON output
         max_tokens: 200,
         temperature: 0,
+        response_format: { type: 'json_object' },
         messages: [
           {
             role: 'system',
