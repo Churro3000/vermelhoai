@@ -29,12 +29,10 @@ export async function GET(req: NextRequest) {
     let testsUsed = 0
 
     if (plan === 'scan') {
-      // Count only audits made after the scan subscription was created
-      const scanCreatedAt = rows[0]?.created_at ?? new Date().toISOString()
+      // Count all audits ever — scan credits are lifetime, not period-based
       const usageRows = await sql`
         SELECT COUNT(*) as count FROM audits
         WHERE user_email = ${email}
-        AND timestamp >= ${scanCreatedAt}
       `
       const totalAudits = parseInt(usageRows[0]?.count ?? '0')
       const scanCredits = rows[0]?.scan_credits ?? 3
