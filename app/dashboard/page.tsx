@@ -425,16 +425,6 @@ function DashboardContent() {
                 </div>
               </div>
             </div>
-            {isAtLimit && (
-              <div className="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between gap-4">
-                <p className="text-[#CC1A1A] text-xs font-semibold">All 3 scans used. Buy more to continue.</p>
-                <Link href="/dashboard/upgrade">
-                  <button className="btn-red text-xs py-1.5 px-3 flex items-center gap-1.5">
-                    <Zap className="w-3 h-3" /> Buy 3 more audits
-                  </button>
-                </Link>
-              </div>
-            )}
           </div>
         )}
 
@@ -517,11 +507,14 @@ function DashboardContent() {
                 </button>
               )}
               {isAtLimit && userPlan === 'scan' ? (
-                <Link href="/dashboard/upgrade">
-                  <button className="btn-red flex items-center gap-2 whitespace-nowrap">
-                    <Zap className="w-4 h-4" /> Buy 3 more audits
-                  </button>
-                </Link>
+                <div className="flex items-center gap-3">
+                  <p className="text-[#CC1A1A] text-xs font-semibold hidden sm:block">All 3 scans used.</p>
+                  <Link href="/dashboard/upgrade">
+                    <button className="btn-red flex items-center gap-2 whitespace-nowrap">
+                      <Zap className="w-4 h-4" /> Buy 3 more audits
+                    </button>
+                  </Link>
+                </div>
               ) : (
                 <button
                   onClick={() => setShowNewAudit(true)}
