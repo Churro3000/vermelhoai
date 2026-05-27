@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     const sql = neon(process.env.DATABASE_URL!)
 
     const subRows = await sql`
-      SELECT plan, status, expires_at FROM subscriptions
+      SELECT plan, status, expires_at, scan_credits, scans_used FROM subscriptions
       WHERE user_email = ${userEmail}
       AND status = 'active'
       LIMIT 1
@@ -190,6 +190,14 @@ export async function POST(req: NextRequest) {
       INSERT INTO audits (audit_id, user_email, endpoint_url, risk_score, risk_level, total_probes, vulnerabilities_found, results)
       VALUES (${auditId}, ${userEmail}, ${endpointUrl}, ${riskScore}, ${riskLevel}, ${results.length}, ${vulnCount}, ${JSON.stringify(results)})
     `
+
+    // Increment scan counter for Quick Scan users
+    if (userPlan === 'scan') {
+      await sql`
+        UPDATE subscriptions SET scans_used = scans_used + 1
+        WHERE user_email = ${userEmail}
+      `
+    }
 
     try {
       const { resend } = await import('@/lib/emails/resend')
