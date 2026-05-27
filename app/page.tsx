@@ -576,7 +576,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <Link href="/signup" className="block">
-                <button className="btn-outline w-full justify-center py-2.5 text-sm">Start free trial</button>
+                <button className="btn-red w-full justify-center py-2.5 text-sm">Start free trial</button>
               </Link>
             </div>
 
@@ -607,7 +607,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <Link href="/signup" className="block">
-                <button className="btn-red w-full justify-center py-2.5 text-sm">Start free trial</button>
+                <button className="btn-outline w-full justify-center py-2.5 text-sm">Start free trial</button>
               </Link>
             </div>
           </div>

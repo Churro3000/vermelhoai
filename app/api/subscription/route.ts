@@ -9,14 +9,15 @@ export async function GET(req: NextRequest) {
 
     const sql = neon(process.env.DATABASE_URL!)
     const rows = await sql`
-      SELECT plan, status, expires_at FROM subscriptions
+      SELECT plan, status, expires_at, scan_credits FROM subscriptions
       WHERE user_email = ${email}
       AND status = 'active'
       LIMIT 1
     `
 
     const plan = rows[0]?.plan ?? 'free'
-    const testLimit = plan === 'professional' ? null : plan === 'starter' ? 50 : plan === 'scan' ? 3 : 10
+    const scanCredits = plan === 'scan' ? (rows[0]?.scan_credits ?? 3) : null
+    const testLimit = plan === 'professional' ? null : plan === 'starter' ? 50 : plan === 'scan' ? (scanCredits ?? 3) : 10
 
     // Count tests used this calendar month
     // Use billing period anchored to renewal date, not calendar month
@@ -46,8 +47,6 @@ export async function GET(req: NextRequest) {
       `
       testsUsed = parseInt(usageRows[0]?.count ?? '0')
     }
-
-    const scanCredits = plan === 'scan' ? (rows[0]?.scan_credits ?? 3) : null
 
     if (!rows.length) return NextResponse.json({ plan: 'free', testsUsed, testLimit: 10 })
     return NextResponse.json({ plan, status: rows[0].status, testsUsed, testLimit, scanCredits })

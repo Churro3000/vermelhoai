@@ -144,7 +144,7 @@ export default function UpgradePage() {
             <button
               onClick={() => handleUpgrade('starter')}
               disabled={loading !== null}
-              className="btn-outline w-full justify-center py-2.5 text-sm disabled:opacity-60"
+              className="btn-red w-full justify-center py-2.5 text-sm disabled:opacity-60"
             >
               {loading === 'starter'
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting...</>
@@ -182,7 +182,7 @@ export default function UpgradePage() {
             <button
               onClick={() => handleUpgrade('professional')}
               disabled={loading !== null}
-              className="btn-red w-full justify-center py-2.5 text-sm disabled:opacity-60"
+              className="btn-outline w-full justify-center py-2.5 text-sm disabled:opacity-60"
             >
               {loading === 'professional'
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting...</>
