@@ -30,14 +30,17 @@ export async function GET(req: NextRequest) {
     let testsUsed = 0
 
     if (plan === 'scan') {
-      // Count all audits ever — scan credits are lifetime, not period-based
+      // Count audits used from current credit batch
+      // scan_credits grows with each purchase, so audits used = total audits - (scan_credits - 3)
       const usageRows = await sql`
         SELECT COUNT(*) as count FROM audits
         WHERE user_email = ${email}
       `
       const totalAudits = parseInt(usageRows[0]?.count ?? '0')
       const scanCredits = rows[0]?.scan_credits ?? 3
-      testsUsed = Math.min(totalAudits, scanCredits)
+      const creditsBought = scanCredits // total credits ever purchased
+      const auditsOffset = creditsBought - 3 // audits before current batch
+      testsUsed = Math.max(0, totalAudits - auditsOffset)
     } else {
       const usageRows = await sql`
         SELECT COUNT(*) as count FROM audits

@@ -32,14 +32,15 @@ export async function POST(req: NextRequest) {
 
     if (testLimit !== null) {
       if (userPlan === 'scan') {
-        // Count all audits ever against lifetime credits
         const scanCredits = subRows[0]?.scan_credits ?? 3
         const usageRows = await sql`
           SELECT COUNT(*) as count FROM audits
           WHERE user_email = ${userEmail}
         `
         const totalAudits = parseInt(usageRows[0]?.count ?? '0')
-        if (totalAudits >= scanCredits) {
+        const auditsOffset = scanCredits - 3
+        const auditsInCurrentBatch = Math.max(0, totalAudits - auditsOffset)
+        if (auditsInCurrentBatch >= 3) {
           return NextResponse.json(
             { error: `You've used all ${scanCredits} Quick Scan audits. Purchase more to continue.` },
             { status: 403 }
