@@ -28,13 +28,14 @@ export async function POST(req: NextRequest) {
         const sql = neon(process.env.DATABASE_URL!)
         // Add 3 credits on top of any existing credits (stacking purchases)
         await sql`
-          INSERT INTO subscriptions (user_email, plan, status, expires_at, scan_credits)
-          VALUES (${userEmail}, 'scan', 'active', NULL, 3)
+          INSERT INTO subscriptions (user_email, plan, status, expires_at, scan_credits, scans_used)
+          VALUES (${userEmail}, 'scan', 'active', NULL, 3, 0)
           ON CONFLICT (user_email)
           DO UPDATE SET
             plan = CASE WHEN subscriptions.plan IN ('starter', 'professional') THEN subscriptions.plan ELSE 'scan' END,
             status = 'active',
-            scan_credits = COALESCE(subscriptions.scan_credits, 0) + 3
+            scan_credits = COALESCE(subscriptions.scan_credits, 0) + 3,
+            scans_used = 0
         `
       }
       return NextResponse.json({ received: true })

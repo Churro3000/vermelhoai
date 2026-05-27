@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
     const sql = neon(process.env.DATABASE_URL!)
     const rows = await sql`
-      SELECT plan, status, expires_at, scan_credits FROM subscriptions
+      SELECT plan, status, expires_at, scan_credits, scans_used FROM subscriptions
       WHERE user_email = ${email}
       AND status = 'active'
       LIMIT 1
@@ -30,17 +30,8 @@ export async function GET(req: NextRequest) {
     let testsUsed = 0
 
     if (plan === 'scan') {
-      // Count audits used from current credit batch
-      // scan_credits grows with each purchase, so audits used = total audits - (scan_credits - 3)
-      const usageRows = await sql`
-        SELECT COUNT(*) as count FROM audits
-        WHERE user_email = ${email}
-      `
-      const totalAudits = parseInt(usageRows[0]?.count ?? '0')
-      const scanCredits = rows[0]?.scan_credits ?? 3
-      const creditsBought = scanCredits // total credits ever purchased
-      const auditsOffset = creditsBought - 3 // audits before current batch
-      testsUsed = Math.max(0, totalAudits - auditsOffset)
+      // Use dedicated scans_used counter — completely independent of other audits
+      testsUsed = rows[0]?.scans_used ?? 0
     } else {
       const usageRows = await sql`
         SELECT COUNT(*) as count FROM audits
