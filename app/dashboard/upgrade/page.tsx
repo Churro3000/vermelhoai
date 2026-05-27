@@ -57,9 +57,7 @@ export default function UpgradePage() {
       {/* NAV */}
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-[1280px] mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/">
-            <ShieldLogo size={26} textColor="text-gray-900" />
-          </Link>
+          <Link href="/"><ShieldLogo size={26} textColor="text-gray-900" /></Link>
           <Link href="/dashboard">
             <button className="flex items-center gap-2 text-gray-500 hover:text-gray-900 text-sm font-semibold transition-colors">
               <ArrowLeft className="w-4 h-4" /> Back to dashboard
@@ -68,17 +66,17 @@ export default function UpgradePage() {
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-6 py-16">
+      <main className="max-w-5xl mx-auto px-6 py-16">
 
         <div className="text-center mb-12">
           <div className="badge badge-red mb-4 mx-auto inline-flex">
-            <Zap className="w-3 h-3" /> Upgrade your plan
+            <Zap className="w-3 h-3" /> Choose your plan
           </div>
-          <h1 className="text-4xl font-black text-gray-900 mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Choose your plan
+          <h1 className="text-3xl font-bold text-gray-900 mb-3 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>
+            Simple, transparent pricing
           </h1>
-          <p className="text-lg text-gray-500">
-            Red team your AI seriously. 7-day free trial. Cancel anytime.
+          <p className="text-base text-gray-500">
+            7-day free trial on subscription plans. Cancel anytime.
           </p>
         </div>
 
@@ -91,31 +89,27 @@ export default function UpgradePage() {
         <div className="grid md:grid-cols-3 gap-6">
 
           {/* Quick Scan */}
-          <div className="card">
-            <div className="mb-6">
-              <h3 className="text-2xl font-black text-gray-900 mb-1" style={{ fontFamily: 'var(--font-display)' }}>Quick Scan</h3>
-              <p className="text-gray-500 text-sm mb-4">3 audits, no expiry. Try it out before committing to a plan.</p>
+          <div className="card hover:border-gray-300 hover:shadow-sm transition-all duration-200">
+            <div className="mb-7">
+              <h3 className="text-xl font-bold text-gray-900 mb-1 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>Quick Scan</h3>
+              <p className="text-gray-400 text-sm mb-5">Try it out — no subscription needed</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-black text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>$5</span>
-                <span className="text-gray-400">one-time</span>
+                <span className="font-bold text-gray-900 leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', letterSpacing: '-0.03em' }}>$5</span>
+                <span className="text-gray-400 text-sm ml-1">one-time</span>
               </div>
-              <p className="text-gray-400 text-xs font-medium mt-2">No subscription · No expiry</p>
+              <p className="text-gray-400 text-xs font-medium mt-2.5">No expiry · No subscription</p>
             </div>
-            <div className="space-y-3 mb-8">
-              {[
-                '3 audits included',
-                '30 adversarial probes per audit',
-                'PDF security reports',
-              ].map(f => (
-                <div key={f} className="flex items-center gap-3 text-sm text-gray-600">
-                  <Check className="w-4 h-4 text-[#00A651] shrink-0" /> {f}
+            <div className="space-y-2.5 mb-8">
+              {['3 audits included', '30 adversarial probes', 'PDF security reports'].map(f => (
+                <div key={f} className="flex items-center gap-2.5 text-sm text-gray-600">
+                  <Check className="w-3.5 h-3.5 text-[#00A651] shrink-0" /> {f}
                 </div>
               ))}
             </div>
             <button
               onClick={() => handleUpgrade('scan')}
               disabled={loading !== null}
-              className="btn-outline w-full justify-center py-3.5 disabled:opacity-60"
+              className="btn-outline w-full justify-center py-2.5 text-sm disabled:opacity-60"
             >
               {loading === 'scan'
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting...</>
@@ -130,34 +124,27 @@ export default function UpgradePage() {
             <div className="absolute top-4 right-4">
               <span className="badge badge-red text-xs">Most popular</span>
             </div>
-            <div className="mb-6">
-              <h3 className="text-2xl font-black text-gray-900 mb-1"
-                style={{ fontFamily: 'var(--font-display)' }}>Starter</h3>
-              <p className="text-gray-500 text-sm mb-2">For AI developers and small teams building and testing as they go</p>
+            <div className="mb-7">
+              <h3 className="text-xl font-bold text-gray-900 mb-1 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>Starter</h3>
+              <p className="text-gray-400 text-sm mb-2">For AI developers and small teams</p>
               <p className="text-[#CC1A1A] text-xs font-semibold mb-4">Perfect while building your AI</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-black text-gray-900"
-                  style={{ fontFamily: 'var(--font-display)' }}>$99</span>
-                <span className="text-gray-400">/month</span>
+                <span className="font-bold text-gray-900 leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', letterSpacing: '-0.03em' }}>$99</span>
+                <span className="text-gray-400 text-sm ml-1">/month</span>
               </div>
-              <p className="text-[#00A651] text-xs font-semibold mt-2">7-day free trial included</p>
+              <p className="text-[#00A651] text-xs font-semibold mt-2.5">7-day free trial included</p>
             </div>
-            <div className="space-y-3 mb-8">
-              {[
-                '50 audits per month',
-                '200+ adversarial probes (updated monthly)',
-                'PDF security reports',
-                'Email support (72hr response)',
-              ].map(f => (
-                <div key={f} className="flex items-center gap-3 text-sm text-gray-600">
-                  <Check className="w-4 h-4 text-[#00A651] shrink-0" /> {f}
+            <div className="space-y-2.5 mb-8">
+              {['50 audits per month', '200+ adversarial probes', 'PDF security reports', 'Email support'].map(f => (
+                <div key={f} className="flex items-center gap-2.5 text-sm text-gray-600">
+                  <Check className="w-3.5 h-3.5 text-[#00A651] shrink-0" /> {f}
                 </div>
               ))}
             </div>
             <button
               onClick={() => handleUpgrade('starter')}
               disabled={loading !== null}
-              className="btn-outline w-full justify-center py-3.5 disabled:opacity-60"
+              className="btn-outline w-full justify-center py-2.5 text-sm disabled:opacity-60"
             >
               {loading === 'starter'
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting...</>
@@ -167,37 +154,35 @@ export default function UpgradePage() {
           </div>
 
           {/* Professional */}
-          <div className="card relative overflow-hidden">
-            <div className="mb-6">
-              <h3 className="text-2xl font-black text-gray-900 mb-1"
-                style={{ fontFamily: 'var(--font-display)' }}>Professional</h3>
-              <p className="text-gray-500 text-sm mb-2">For AI companies shipping to production. Continuous security testing.</p>
+          <div className="card hover:border-gray-300 hover:shadow-sm transition-all duration-200">
+            <div className="mb-7">
+              <h3 className="text-xl font-bold text-gray-900 mb-1 tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>Professional</h3>
+              <p className="text-gray-400 text-sm mb-2">For AI companies shipping to production</p>
               <p className="text-[#CC1A1A] text-xs font-semibold mb-4">For teams shipping AI to production</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-black text-gray-900"
-                  style={{ fontFamily: 'var(--font-display)' }}>$299</span>
-                <span className="text-gray-400">/month</span>
+                <span className="font-bold text-gray-900 leading-none" style={{ fontFamily: 'var(--font-display)', fontSize: '2.5rem', letterSpacing: '-0.03em' }}>$299</span>
+                <span className="text-gray-400 text-sm ml-1">/month</span>
               </div>
-              <p className="text-[#00A651] text-xs font-semibold mt-2">7-day free trial included</p>
+              <p className="text-[#00A651] text-xs font-semibold mt-2.5">7-day free trial included</p>
             </div>
-            <div className="space-y-3 mb-8">
+            <div className="space-y-2.5 mb-8">
               {[
                 'Unlimited audits',
-                '200+ adversarial probes (updated monthly)',
+                '200+ adversarial probes',
                 'PDF reports + CSV export',
                 'API access for CI/CD integration',
                 'Custom probe upload',
-                'Email support (72hr response)',
+                'Priority email support',
               ].map(f => (
-                <div key={f} className="flex items-center gap-3 text-sm text-gray-600">
-                  <Check className="w-4 h-4 text-[#00A651] shrink-0" /> {f}
+                <div key={f} className="flex items-center gap-2.5 text-sm text-gray-600">
+                  <Check className="w-3.5 h-3.5 text-[#00A651] shrink-0" /> {f}
                 </div>
               ))}
             </div>
             <button
               onClick={() => handleUpgrade('professional')}
               disabled={loading !== null}
-              className="btn-red w-full justify-center py-3.5 disabled:opacity-60"
+              className="btn-red w-full justify-center py-2.5 text-sm disabled:opacity-60"
             >
               {loading === 'professional'
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting...</>
