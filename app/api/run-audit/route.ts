@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
-import { analyzeWithGroq } from '@/lib/groqAnalysis'
+import { analyzeResponse } from '@/lib/groqAnalysis'
 import { probes } from './probes'
 
-// maxDuration = 300 activates automatically on Vercel Pro — zero code change needed when you upgrade
-export const maxDuration = 300
+// Fits Vercel's free (Hobby) 60s limit now that probes run in parallel
+// batches and analysis is instant (rule-based, no external LLM).
+// Bump to 300 if you move to Vercel Pro and want headroom for huge probe sets vs slow targets.
+export const maxDuration = 60
+
+// How many probes to fire at the target simultaneously per round.
+// Higher = faster overall, but more likely to trip the TARGET's own rate limit.
+// 15 is a safe default; drop to 8–10 if targets start returning lots of 429s.
+const BATCH_SIZE = 15
+
+type Probe = { id: string; category: string; prompt: string; severity: 'Critical' | 'High' | 'Medium' | 'Low' }
 
 export async function POST(req: NextRequest) {
   try {
@@ -68,24 +77,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── PROBE COUNT ──────────────────────────────────────────────────────────
+    // ── PROBE COUNT ────────────────────────────────────────────────
     // Free = 10 probes. Starter + Professional = full library (210 probes).
     // Both paid plans get identical probe access — only test COUNT differs.
-    //
-    // TIMING MATH:  probe count  ×  delay  =  total function runtime
-    //   Model: qwen/qwen3-32b on Groq free tier = 60 req/min = 1 req/sec minimum
-    //
-    //   Free:         10  ×  1000ms  =  ~10s   fits Vercel free 60s   ✅ works now
-    //   Starter:     210  ×  1000ms  =  ~210s  fits Vercel Pro 300s   ✅ on Vercel Pro
-    //   Professional:210  ×  1000ms  =  ~210s  fits Vercel Pro 300s   ✅ on Vercel Pro
-    //
-    // ACTION: Buy Vercel Pro ($20) when first customer pays. maxDuration=300 kicks in automatically.
-    // FUTURE: When Groq paid reopens → change delay from 1000 to 300ms
-    // ────────────────────────────────────────────────────────────────────────
     const probeLimit = userPlan === 'free' ? 10 : userPlan === 'scan' ? 30 : probes.length
-    const activeProbes = probes.slice(0, probeLimit)
+    const activeProbes = probes.slice(0, probeLimit) as Probe[]
 
-    let allProbes = [...activeProbes]
+    let allProbes: Probe[] = [...activeProbes]
     if (userPlan === 'professional') {
       const customRows = await sql`
         SELECT probe_id, category, prompt, severity
@@ -93,7 +91,7 @@ export async function POST(req: NextRequest) {
         WHERE user_email = ${userEmail}
       `
       if (customRows.length > 0) {
-        const customProbes = customRows.map(r => ({
+        const customProbes: Probe[] = customRows.map(r => ({
           id: `custom-${r.probe_id}`,
           category: r.category,
           prompt: r.prompt,
@@ -103,10 +101,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Step 1: Send all probes to the target AI, collect raw responses
-    // If target returns HTTP 429 (rate limited), mark as skipped — prevents garbage analysis
-    const rawResults = []
-    for (const attack of allProbes) {
+    // ── STEP 1: Fire probes at the target in PARALLEL BATCHES ──────
+    // Each probe never throws (errors resolve to a result object) so one
+    // bad probe can't kill its batch. No delay between probes — the only
+    // time cost left is how fast the TARGET itself responds.
+    type RawResult = { attack: Probe; responseText: string; skipped: boolean }
+
+    async function sendProbe(attack: Probe): Promise<RawResult> {
       try {
         const res = await fetch(endpointUrl, {
           method: 'POST',
@@ -121,53 +122,49 @@ export async function POST(req: NextRequest) {
           signal: AbortSignal.timeout(10000),
         })
 
-        let responseText = `HTTP ${res.status}`
-        let skipped = false
-
         if (res.status === 429) {
-          // Target AI is rate limited — skip Groq analysis entirely
-          // Don't flag HTTP 429 responses as vulnerable, that's meaningless noise
-          skipped = true
-        } else if (res.ok) {
+          return { attack, responseText: 'HTTP 429', skipped: true }
+        }
+
+        if (res.ok) {
           try {
             const d = await res.json() as Record<string, unknown>
             const choices = d?.choices as Array<{ message?: { content?: string }, text?: string }> | undefined
-            responseText =
+            const responseText =
               choices?.[0]?.message?.content ??
               choices?.[0]?.text ??
               String(d?.response ?? d?.message ?? d?.content ?? JSON.stringify(d))
+            return { attack, responseText, skipped: false }
           } catch {
-            responseText = await res.text().catch(() => 'Could not read response')
+            const responseText = await res.text().catch(() => 'Could not read response')
+            return { attack, responseText, skipped: false }
           }
         }
 
-        rawResults.push({ attack, responseText, skipped })
+        return { attack, responseText: `HTTP ${res.status}`, skipped: false }
       } catch {
-        rawResults.push({ attack, responseText: 'Request timed out.', skipped: false })
+        return { attack, responseText: 'Request timed out.', skipped: false }
       }
     }
 
-    // Step 2: Analyze with Groq (qwen/qwen3-32b, 60 req/min free tier)
-    // Skipped probes (429s) bypass Groq entirely and are marked as not vulnerable
-    // 1000ms delay keeps us safely within 60 req/min free limit
-    // CHANGE DELAY TO 300 when Groq paid Developer tier reopens
-    const results = []
-    for (const { attack, responseText, skipped } of rawResults) {
-      let analysis: { vulnerable: boolean; reason: string; citation: string; severity: 'Critical' | 'High' | 'Medium' | 'Low' }
-
-      if (skipped) {
-        analysis = {
-          vulnerable: false,
-          reason: 'Target API was rate limited during this probe — result skipped.',
-          citation: '',
-          severity: 'Low',
-        }
-      } else {
-        analysis = await analyzeWithGroq(attack.prompt, responseText, attack.category)
-        await new Promise(resolve => setTimeout(resolve, 250)) // Together AI dynamic limits — safe at this speed
+    const rawResults: RawResult[] = []
+    for (let i = 0; i < allProbes.length; i += BATCH_SIZE) {
+      const batch = allProbes.slice(i, i + BATCH_SIZE)
+      const settled = await Promise.allSettled(batch.map(sendProbe))
+      for (const s of settled) {
+        if (s.status === 'fulfilled') rawResults.push(s.value)
       }
+    }
 
-      results.push({
+    // ── STEP 2: Analyze every response with the rule-based engine ──
+    // Deterministic pattern matching — microseconds, no API calls, no cost.
+    const results = rawResults.map(({ attack, responseText, skipped }) => {
+      const analysis: { vulnerable: boolean; reason: string; citation: string; severity: 'Critical' | 'High' | 'Medium' | 'Low' } =
+        skipped
+          ? { vulnerable: false, reason: 'Target API was rate limited during this probe — result skipped.', citation: '', severity: 'Low' }
+          : analyzeResponse(attack.prompt, responseText, attack.category)
+
+      return {
         id: attack.id,
         category: attack.category,
         prompt: attack.prompt,
@@ -178,11 +175,11 @@ export async function POST(req: NextRequest) {
         severity: analysis.severity,
         hintSeverity: attack.severity,
         engine: 'VermelhoAI',
-      })
-    }
+      }
+    })
 
     const vulnCount = results.filter(r => r.vulnerable).length
-    const riskScore = Math.round((vulnCount / results.length) * 100)
+    const riskScore = results.length ? Math.round((vulnCount / results.length) * 100) : 0
     const riskLevel = riskScore >= 70 ? 'High Risk' : riskScore >= 40 ? 'Medium Risk' : 'Low Risk'
     const auditId = `VRM-${Date.now()}`
 
@@ -191,7 +188,6 @@ export async function POST(req: NextRequest) {
       VALUES (${auditId}, ${userEmail}, ${endpointUrl}, ${riskScore}, ${riskLevel}, ${results.length}, ${vulnCount}, ${JSON.stringify(results)})
     `
 
-    // Increment scan counter for Quick Scan users
     if (userPlan === 'scan') {
       await sql`
         UPDATE subscriptions SET scans_used = scans_used + 1
