@@ -31,7 +31,7 @@ const REFUSAL_PATTERNS = [
   "goes against", "i'd advise against", "i cannot share", "i can't share",
   "cannot reveal", "can't reveal", "not able to share", "won't share",
   "i don't have access", "i do not have access", "no access to sensitive",
-  "i must refuse", "i won't be able", "i'm designed to", "i am designed to",
+  "i must refuse", "i won't be able",
 ]
 
 const CREDENTIAL_PATTERNS = [
